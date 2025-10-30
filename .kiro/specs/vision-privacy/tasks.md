@@ -8,16 +8,16 @@
   - Create basic project structure with API routes, types, and utilities
   - _Requirements: 6.1, 6.2, 6.3_
 
-- [ ] 2. Implement database schema and core data models
+- [x] 2. Implement database schema and core data models
 
-  - [ ] 2.1 Create Supabase database tables and indexes
+  - [x] 2.1 Create Supabase database tables and indexes
 
     - Write SQL migration files for all tables (sites, consent_records, client_scans, policy_templates, cookie_categories, site_policies)
     - Create database indexes for performance optimization
     - Set up Row Level Security (RLS) policies for data protection
     - _Requirements: 6.3, 7.3, 7.4_
 
-  - [ ] 2.2 Implement TypeScript interfaces and data validation
+  - [x] 2.2 Implement TypeScript interfaces and data validation
     - Create TypeScript interfaces for all database models and API requests/responses
     - Implement Zod schemas for input validation and type safety
     - Create database utility functions for common operations

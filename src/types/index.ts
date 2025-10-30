@@ -107,8 +107,8 @@ export interface Site {
   api_token: string;
   wp_version?: string;
   plugin_version?: string;
-  installed_plugins?: string[];
-  detected_forms?: FormData[];
+  installed_plugins: string[];
+  detected_forms: FormData[];
   status: 'active' | 'inactive' | 'suspended';
   created_at: string;
   updated_at: string;
@@ -121,7 +121,8 @@ export interface ConsentRecord {
   consent_categories: string[];
   consent_timestamp: string;
   expires_at: string;
-  user_agent_hash: string;
+  user_agent_hash?: string;
+  created_at: string;
 }
 
 export interface ClientScan {
@@ -131,25 +132,39 @@ export interface ClientScan {
   detected_cookies: DetectedCookie[];
   scan_timestamp: string;
   processed: boolean;
+  created_at: string;
 }
 
 export interface PolicyTemplate {
   id: string;
-  template_type: 'banner' | 'policy';
+  template_type: 'banner' | 'policy' | 'cookie_notice';
   content: string;
   version: string;
   is_active: boolean;
   created_by?: string;
   created_at: string;
+  updated_at: string;
+}
+
+export interface CookieCategoryDB {
+  id: string;
+  name: string;
+  description?: string;
+  is_essential: boolean;
+  sort_order: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface SitePolicy {
   id: string;
   site_id: string;
   policy_content?: string;
-  banner_config?: BannerConfig;
+  banner_config: BannerConfig;
   last_updated: string;
   template_version?: string;
+  created_at: string;
 }
 
 // Error codes enum
@@ -162,4 +177,88 @@ export enum ErrorCodes {
   VALIDATION_ERROR = 1006,
   DATABASE_ERROR = 1007,
   UNAUTHORIZED = 1008
+}
+// 
+Admin API interfaces
+export interface TemplateUpdateRequest {
+  banner_template?: string;
+  policy_template?: string;
+  cookie_categories?: Omit<CookieCategory, 'id'>[];
+  version: string;
+}
+
+export interface AdminSitesResponse {
+  sites: SiteInfo[];
+  total_count: number;
+  consent_stats: ConsentStats;
+}
+
+export interface SiteInfo {
+  id: string;
+  domain: string;
+  status: string;
+  wp_version?: string;
+  plugin_version?: string;
+  total_consents: number;
+  last_scan?: string;
+  created_at: string;
+}
+
+export interface ConsentStats {
+  total_consents: number;
+  consents_today: number;
+  acceptance_rate: number;
+  top_categories: Array<{
+    category: string;
+    count: number;
+  }>;
+}
+
+// Database utility types
+export interface DatabaseInsert<T> {
+  [K in keyof T as T[K] extends string | undefined ? K : never]?: T[K];
+}
+
+export interface DatabaseUpdate<T> {
+  [K in keyof T]?: T[K];
+}
+
+// Pagination types
+export interface PaginationParams {
+  page?: number;
+  limit?: number;
+  sort_by?: string;
+  sort_order?: 'asc' | 'desc';
+}
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    total_pages: number;
+  };
+}
+
+// Filter types for queries
+export interface SiteFilters {
+  status?: 'active' | 'inactive' | 'suspended';
+  domain?: string;
+  created_after?: string;
+  created_before?: string;
+}
+
+export interface ConsentFilters {
+  site_id?: string;
+  consent_after?: string;
+  consent_before?: string;
+  categories?: string[];
+}
+
+export interface ScanFilters {
+  site_id?: string;
+  processed?: boolean;
+  scan_after?: string;
+  scan_before?: string;
 }
