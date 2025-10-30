@@ -58,3 +58,6 @@ jspm_packages/
 
 # Testing
 .nyc_output/
+
+# Kiro IDE specs and internal files
+.kiro/
