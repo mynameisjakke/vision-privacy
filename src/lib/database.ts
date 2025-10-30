@@ -50,6 +50,11 @@ export class SitesDB {
     return data
   }
 
+  // Alias for backward compatibility
+  static async getById(id: string): Promise<Site | null> {
+    return this.findById(id)
+  }
+
   static async findByDomain(domain: string): Promise<Site | null> {
     const { data, error } = await supabase
       .from(TABLES.SITES)
@@ -179,6 +184,40 @@ export class ConsentRecordsDB {
       throw new Error(`Failed to find consent record: ${errorMsg}`)
     }
     return data
+  }
+
+  // Alias for backward compatibility
+  static async getByVisitorHash(siteId: string, visitorHash: string): Promise<ConsentRecord | null> {
+    return this.findBySiteAndVisitor(siteId, visitorHash)
+  }
+
+  static async update(id: string, updates: Partial<ConsentRecord>): Promise<ConsentRecord> {
+    const { data, error } = await supabase
+      .from(TABLES.CONSENT_RECORDS)
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single()
+    
+    if (error) {
+      const { error: errorMsg } = handleSupabaseError(error)
+      throw new Error(`Failed to update consent record: ${errorMsg}`)
+    }
+    return data
+  }
+
+  static async deleteByVisitorHash(siteId: string, visitorHash: string): Promise<boolean> {
+    const { error } = await supabase
+      .from(TABLES.CONSENT_RECORDS)
+      .delete()
+      .eq('site_id', siteId)
+      .eq('visitor_hash', visitorHash)
+    
+    if (error) {
+      const { error: errorMsg } = handleSupabaseError(error)
+      throw new Error(`Failed to delete consent record: ${errorMsg}`)
+    }
+    return true
   }
 
   static async list(filters: ConsentFilters = {}, pagination: PaginationParams = {}): Promise<PaginatedResponse<ConsentRecord>> {

@@ -89,3 +89,66 @@ export function isAllowedOrigin(request: NextRequest, allowedDomain: string): bo
     return false
   }
 }
+
+/**
+ * Validate admin token for administrative operations
+ */
+export async function validateAdminToken(request: NextRequest) {
+  const token = extractApiToken(request)
+  
+  if (!token) {
+    return { valid: false, error: 'No admin token provided' }
+  }
+  
+  // Check if token matches admin token from environment
+  const adminToken = process.env.ADMIN_API_TOKEN
+  if (!adminToken) {
+    console.error('ADMIN_API_TOKEN not configured')
+    return { valid: false, error: 'Admin authentication not configured' }
+  }
+  
+  if (token !== adminToken) {
+    return { valid: false, error: 'Invalid admin token' }
+  }
+  
+  // Extract user info from headers (optional)
+  const adminUser = request.headers.get('x-admin-user') || 'admin'
+  
+  return { valid: true, user: adminUser }
+}
+
+/**
+ * Validate API token for general API access (both site and admin tokens)
+ */
+export async function validateApiToken(request: NextRequest) {
+  const token = extractApiToken(request)
+  
+  if (!token) {
+    return { valid: false, error: 'No token provided' }
+  }
+  
+  // First try admin token
+  const adminToken = process.env.ADMIN_API_TOKEN
+  if (adminToken && token === adminToken) {
+    return { valid: true, isAdmin: true, user: 'admin' }
+  }
+  
+  // Then try site token
+  try {
+    const { data: site, error } = await supabaseAdmin
+      .from(TABLES.SITES)
+      .select('id, domain, status')
+      .eq('api_token', token)
+      .eq('status', 'active')
+      .single()
+    
+    if (error || !site) {
+      return { valid: false, error: 'Invalid or inactive token' }
+    }
+    
+    return { valid: true, isAdmin: false, site }
+  } catch (error) {
+    console.error('Token validation error:', error)
+    return { valid: false, error: 'Token validation failed' }
+  }
+}
