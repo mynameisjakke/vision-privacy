@@ -8,10 +8,24 @@ export function generateApiToken(): string {
 }
 
 /**
- * Generate a unique site ID
+ * Generate a unique site ID (UUID v4 format)
  */
 export function generateSiteId(): string {
-  return randomBytes(16).toString('hex')
+  const bytes = randomBytes(16)
+  
+  // Set version (4) and variant bits according to RFC 4122
+  bytes[6] = (bytes[6] & 0x0f) | 0x40 // Version 4
+  bytes[8] = (bytes[8] & 0x3f) | 0x80 // Variant 10
+  
+  // Format as UUID string
+  const hex = bytes.toString('hex')
+  return [
+    hex.substring(0, 8),
+    hex.substring(8, 12),
+    hex.substring(12, 16),
+    hex.substring(16, 20),
+    hex.substring(20, 32)
+  ].join('-')
 }
 
 /**

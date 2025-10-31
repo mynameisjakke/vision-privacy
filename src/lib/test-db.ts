@@ -1,4 +1,7 @@
 // Test script to verify database connection and operations
+import { config } from 'dotenv'
+config({ path: '.env.local' })
+
 import { DatabaseUtils, SitesDB, CookieCategoriesDB } from './database'
 
 export async function testDatabaseConnection() {

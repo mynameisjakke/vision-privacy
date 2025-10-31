@@ -178,8 +178,8 @@ export enum ErrorCodes {
   DATABASE_ERROR = 1007,
   UNAUTHORIZED = 1008
 }
-// 
-Admin API interfaces
+
+// Admin API interfaces
 export interface TemplateUpdateRequest {
   banner_template?: string;
   policy_template?: string;
@@ -215,13 +215,9 @@ export interface ConsentStats {
 }
 
 // Database utility types
-export interface DatabaseInsert<T> {
-  [K in keyof T as T[K] extends string | undefined ? K : never]?: T[K];
-}
+export type DatabaseInsert<T> = Partial<T>
 
-export interface DatabaseUpdate<T> {
-  [K in keyof T]?: T[K];
-}
+export type DatabaseUpdate<T> = Partial<T>
 
 // Pagination types
 export interface PaginationParams {

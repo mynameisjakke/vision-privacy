@@ -82,8 +82,9 @@ export function validateRequest<T>(schema: z.ZodSchema<T>, data: unknown): { suc
     }
     return { success: false, error: 'Validation failed' }
   }
-}// Databas
-e model validation schemas
+}
+
+// Database model validation schemas
 export const siteSchema = z.object({
   id: z.string().uuid().optional(),
   domain: z.string().url('Invalid domain URL'),

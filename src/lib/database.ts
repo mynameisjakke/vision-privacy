@@ -361,6 +361,36 @@ export class ClientScansDB {
       }
     }
   }
+
+  static async getLatestBySiteId(siteId: string): Promise<ClientScan | null> {
+    const { data, error } = await supabase
+      .from(TABLES.CLIENT_SCANS)
+      .select('*')
+      .eq('site_id', siteId)
+      .eq('processed', true)
+      .order('scan_timestamp', { ascending: false })
+      .limit(1)
+      .single()
+    
+    if (error && error.code !== 'PGRST116') {
+      const { error: errorMsg } = handleSupabaseError(error)
+      throw new Error(`Failed to get latest scan: ${errorMsg}`)
+    }
+    return data
+  }
+
+  static async markProcessed(id: string): Promise<boolean> {
+    const { error } = await supabase
+      .from(TABLES.CLIENT_SCANS)
+      .update({ processed: true })
+      .eq('id', id)
+    
+    if (error) {
+      const { error: errorMsg } = handleSupabaseError(error)
+      throw new Error(`Failed to mark scan as processed: ${errorMsg}`)
+    }
+    return true
+  }
 }
 
 /**

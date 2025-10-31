@@ -50,10 +50,10 @@ export async function GET(
     const cookieCategories = await CookieCategoriesDB.listActive()
     
     // Get active banner template
-    const bannerTemplate = await PolicyTemplatesDB.getActiveByType('banner')
+    const bannerTemplate = await PolicyTemplatesDB.findActive('banner')
     
     // Get active policy template
-    const policyTemplate = await PolicyTemplatesDB.getActiveByType('policy')
+    const policyTemplate = await PolicyTemplatesDB.findActive('policy')
     
     // Generate banner HTML with site-specific data
     const bannerHtml = generateBannerHtml(bannerTemplate?.content || getDefaultBannerTemplate(), site)
