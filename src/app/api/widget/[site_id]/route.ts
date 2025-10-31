@@ -228,7 +228,7 @@ function generateBannerCss(): string {
       height: 100%;
       background: rgba(0,0,0,0.5);
       z-index: 1000000;
-      display: flex;
+      display: none;
       align-items: center;
       justify-content: center;
     }
@@ -240,6 +240,7 @@ function generateBannerCss(): string {
       width: 90%;
       max-height: 80vh;
       overflow-y: auto;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
     }
     
     .vp-modal-header {
@@ -247,6 +248,9 @@ function generateBannerCss(): string {
       display: flex;
       justify-content: space-between;
       align-items: center;
+      border-bottom: 1px solid #e0e0e0;
+      margin-bottom: 0;
+      padding-bottom: 15px;
     }
     
     .vp-modal-header h3 {
@@ -261,10 +265,28 @@ function generateBannerCss(): string {
       font-size: 24px;
       cursor: pointer;
       color: #666;
+      padding: 0;
+      width: 30px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 4px;
+    }
+    
+    .vp-close:hover {
+      background: #f0f0f0;
+      color: #333;
     }
     
     .vp-modal-body {
       padding: 20px;
+    }
+    
+    .vp-modal-body > p {
+      margin: 0 0 20px 0;
+      color: #666;
+      line-height: 1.5;
     }
     
     .vp-modal-footer {
@@ -272,30 +294,59 @@ function generateBannerCss(): string {
       display: flex;
       gap: 12px;
       justify-content: flex-end;
+      border-top: 1px solid #e0e0e0;
+      margin-top: 20px;
+      padding-top: 15px;
     }
     
     .vp-category {
-      margin-bottom: 20px;
+      margin-bottom: 16px;
       padding: 16px;
       border: 1px solid #e0e0e0;
       border-radius: 6px;
+      background: #fafafa;
+    }
+    
+    .vp-category:last-child {
+      margin-bottom: 0;
     }
     
     .vp-category-header {
       display: flex;
       justify-content: space-between;
-      align-items: center;
+      align-items: flex-start;
       margin-bottom: 8px;
+    }
+    
+    .vp-category-info {
+      flex: 1;
+      margin-right: 15px;
     }
     
     .vp-category-name {
       font-weight: 600;
       color: #333;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .vp-essential-badge {
+      background: #28a745;
+      color: white;
+      font-size: 11px;
+      font-weight: 500;
+      padding: 2px 6px;
+      border-radius: 3px;
+      text-transform: uppercase;
     }
     
     .vp-category-description {
       color: #666;
       font-size: 13px;
+      line-height: 1.4;
+      margin: 0;
     }
     
     .vp-toggle {
@@ -303,6 +354,7 @@ function generateBannerCss(): string {
       display: inline-block;
       width: 44px;
       height: 24px;
+      flex-shrink: 0;
     }
     
     .vp-toggle input {
@@ -333,13 +385,20 @@ function generateBannerCss(): string {
       background-color: white;
       transition: .4s;
       border-radius: 50%;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
     }
     
     input:checked + .vp-slider {
       background-color: #007cba;
     }
     
-    input:checked + .vp-slider:before {
+    input:disabled + .vp-slider {
+      background-color: #28a745;
+      cursor: not-allowed;
+    }
+    
+    input:checked + .vp-slider:before,
+    input:disabled + .vp-slider:before {
       transform: translateX(20px);
     }
     
@@ -352,11 +411,35 @@ function generateBannerCss(): string {
       .vp-banner-actions {
         width: 100%;
         justify-content: center;
+        flex-wrap: wrap;
       }
       
       .vp-btn {
         flex: 1;
-        min-width: 0;
+        min-width: 120px;
+      }
+      
+      .vp-modal-content {
+        width: 95%;
+        max-height: 90vh;
+      }
+      
+      .vp-category-header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      
+      .vp-category-info {
+        margin-right: 0;
+        margin-bottom: 10px;
+      }
+      
+      .vp-modal-footer {
+        flex-direction: column;
+      }
+      
+      .vp-modal-footer .vp-btn {
+        width: 100%;
       }
     }
   `

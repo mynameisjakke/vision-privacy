@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
     // Generate unique identifiers
     const siteId = generateSiteId()
     const apiToken = generateApiToken()
-    const widgetUrl = `${process.env.NEXT_PUBLIC_WIDGET_CDN_URL}/widget.js`
+    const widgetUrl = `${process.env.NEXT_PUBLIC_API_URL}/api/widget/script`
     
     // Insert site into database
     const { data: site, error } = await supabaseAdmin

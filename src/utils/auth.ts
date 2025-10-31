@@ -120,7 +120,7 @@ export async function validateAdminToken(request: NextRequest) {
 /**
  * Validate API token for general API access (both site and admin tokens)
  */
-export async function validateApiToken(request: NextRequest) {
+export async function validateGeneralApiToken(request: NextRequest) {
   const token = extractApiToken(request)
   
   if (!token) {

@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vision Privacy Widget Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .test-section {
+            background: #f5f5f5;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        button {
+            background: #007cba;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #005a87;
+        }
+        .consent-info {
+            background: white;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Vision Privacy Widget Test Page</h1>
+        
+        <div class="test-section">
+            <h2>Widget Status</h2>
+            <div id="widget-status" class="status info">Initializing widget...</div>
+        </div>
+        
+        <div class="test-section">
+            <h2>Test Controls</h2>
+            <button onclick="showBanner()">Show Banner</button>
+            <button onclick="clearConsent()">Clear Consent</button>
+            <button onclick="checkConsent()">Check Consent</button>
+            <button onclick="refreshConfig()">Refresh Config</button>
+            <button onclick="triggerScan()">Trigger Scan</button>
+            <button onclick="showScanStats()">Show Scan Stats</button>
+        </div>
+        
+        <div class="test-section">
+            <h2>Current Consent Status</h2>
+            <div id="consent-status" class="consent-info">
+                <p>No consent data available</p>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h2>Scanning Status</h2>
+            <div id="scan-status" class="consent-info">
+                <p>No scan data available</p>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h2>Event Log</h2>
+            <div id="event-log" style="background: white; padding: 10px; border: 1px solid #ddd; border-radius: 4px; height: 200px; overflow-y: auto; font-family: monospace; font-size: 12px;"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>Sample Content</h2>
+            <p>This is a sample page to test the Vision Privacy widget. The widget should automatically initialize and show a cookie banner if no consent has been given.</p>
+            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+            <p>Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+        </div>
+    </div>
+
+    <!-- Widget Configuration -->
+    <script>
+        // Test configuration - using real test site ID
+        window.VP_SITE_ID = 'ce74b815-bcb5-484d-befe-76a1441689c4';
+        window.VP_API_ENDPOINT = 'http://localhost:3000';
+    </script>
+
+    <!-- Test third-party scripts for scanning -->
+    <script src="https://www.google-analytics.com/analytics.js" data-category="analytics"></script>
+    <script src="https://connect.facebook.net/en_US/fbevents.js" data-category="advertising"></script>
+    <script>
+        // Simulate some third-party URLs in inline script
+        var trackingUrls = [
+            'https://www.googletagmanager.com/gtag/js?id=GA_MEASUREMENT_ID',
+            'https://www.facebook.com/tr?id=123456789'
+        ];
+        
+        // Set some test cookies
+        document.cookie = '_ga=GA1.2.123456789.1234567890; path=/';
+        document.cookie = '_fbp=fb.1.1234567890.123456789; path=/';
+        document.cookie = 'session_id=abc123; path=/';
+    </script>
+
+    <!-- Load the widget -->
+    <script src="/vision-privacy-widget.js"></script>
+
+    <!-- Test utilities -->
+    <script>
+        let eventCount = 0;
+        
+        function logEvent(message, type = 'info') {
+            eventCount++;
+            const timestamp = new Date().toLocaleTimeString();
+            const logElement = document.getElementById('event-log');
+            const entry = document.createElement('div');
+            entry.innerHTML = `<span style="color: #666;">[${timestamp}]</span> <span style="color: ${type === 'error' ? 'red' : type === 'success' ? 'green' : 'blue'};">${message}</span>`;
+            logElement.appendChild(entry);
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+        
+        function updateStatus(message, type = 'info') {
+            const statusElement = document.getElementById('widget-status');
+            statusElement.textContent = message;
+            statusElement.className = `status ${type}`;
+        }
+        
+        function updateConsentStatus() {
+            const consentElement = document.getElementById('consent-status');
+            
+            if (window.VisionPrivacy) {
+                const consent = window.VisionPrivacy.getConsent();
+                if (consent) {
+                    consentElement.innerHTML = `
+                        <h4>Consent Found</h4>
+                        <p><strong>Categories:</strong> ${consent.consent_categories ? consent.consent_categories.join(', ') : 'None'}</p>
+                        <p><strong>Timestamp:</strong> ${consent.timestamp || 'Unknown'}</p>
+                        <p><strong>Expires:</strong> ${consent.expires_at || 'Unknown'}</p>
+                        <p><strong>Valid:</strong> ${window.VisionPrivacy.hasValidConsent() ? 'Yes' : 'No'}</p>
+                    `;
+                } else {
+                    consentElement.innerHTML = '<p>No consent data found</p>';
+                }
+            } else {
+                consentElement.innerHTML = '<p>Widget not initialized</p>';
+            }
+        }
+        
+        // Test functions
+        function showBanner() {
+            if (window.VisionPrivacy) {
+                window.VisionPrivacy.showConsentBanner();
+                logEvent('Banner show requested', 'info');
+            } else {
+                logEvent('Widget not available', 'error');
+            }
+        }
+        
+        function clearConsent() {
+            localStorage.removeItem(`vp_consent_${window.VP_SITE_ID}`);
+            logEvent('Consent cleared from localStorage', 'info');
+            updateConsentStatus();
+        }
+        
+        function checkConsent() {
+            updateConsentStatus();
+            logEvent('Consent status updated', 'info');
+        }
+        
+        function refreshConfig() {
+            if (window.VisionPrivacy) {
+                window.VisionPrivacy.refreshConfig().then(() => {
+                    logEvent('Configuration refreshed', 'success');
+                }).catch(error => {
+                    logEvent(`Config refresh failed: ${error.message}`, 'error');
+                });
+            } else {
+                logEvent('Widget not available', 'error');
+            }
+        }
+        
+        function triggerScan() {
+            if (window.VisionPrivacy) {
+                window.VisionPrivacy.triggerScan().then(() => {
+                    logEvent('Manual scan completed', 'success');
+                    updateScanStatus();
+                }).catch(error => {
+                    logEvent(`Scan failed: ${error.message}`, 'error');
+                });
+            } else {
+                logEvent('Widget not available', 'error');
+            }
+        }
+        
+        function showScanStats() {
+            if (window.VisionPrivacy) {
+                const stats = window.VisionPrivacy.getScanStats();
+                logEvent(`Scan stats: ${JSON.stringify(stats, null, 2)}`, 'info');
+                updateScanStatus();
+            } else {
+                logEvent('Widget not available', 'error');
+            }
+        }
+        
+        function updateScanStatus() {
+            const scanElement = document.getElementById('scan-status');
+            
+            if (window.VisionPrivacy) {
+                const stats = window.VisionPrivacy.getScanStats();
+                scanElement.innerHTML = `
+                    <h4>Scanning Statistics</h4>
+                    <p><strong>Last Scan:</strong> ${stats.last_scan || 'Never'}</p>
+                    <p><strong>Scripts Detected:</strong> ${stats.scripts_detected}</p>
+                    <p><strong>Cookies Detected:</strong> ${stats.cookies_detected}</p>
+                    <p><strong>Categories:</strong> ${JSON.stringify(stats.categories, null, 2)}</p>
+                `;
+            } else {
+                scanElement.innerHTML = '<p>Widget not initialized</p>';
+            }
+        }
+        
+        // Listen for widget events
+        window.addEventListener('vp:initialized', (event) => {
+            logEvent('Widget initialized successfully', 'success');
+            updateStatus('Widget initialized and ready', 'success');
+            updateConsentStatus();
+        });
+        
+        window.addEventListener('vp:error', (event) => {
+            logEvent(`Widget error: ${event.detail.message}`, 'error');
+            updateStatus(`Error: ${event.detail.message}`, 'error');
+        });
+        
+        window.addEventListener('vp:banner_shown', (event) => {
+            logEvent('Cookie banner displayed', 'info');
+        });
+        
+        window.addEventListener('vp:banner_hidden', (event) => {
+            logEvent('Cookie banner hidden', 'info');
+        });
+        
+        window.addEventListener('vp:consent_saved', (event) => {
+            logEvent(`Consent saved: ${event.detail.categories.join(', ')}`, 'success');
+            updateConsentStatus();
+        });
+        
+        window.addEventListener('vp:consent_enforced', (event) => {
+            logEvent(`Consent enforced: ${event.detail.categories.join(', ')}`, 'info');
+        });
+        
+        window.addEventListener('vp:scanning_started', (event) => {
+            logEvent(`Scanning started with ${event.detail.interval}ms interval`, 'info');
+        });
+        
+        window.addEventListener('vp:scan_completed', (event) => {
+            logEvent(`Scan completed: ${event.detail.detected_scripts.length} scripts, ${event.detail.detected_cookies.length} cookies`, 'info');
+            updateScanStatus();
+        });
+        
+        window.addEventListener('vp:scan_reported', (event) => {
+            logEvent('Scan results reported to server', 'success');
+        });
+        
+        window.addEventListener('vp:scan_failed', (event) => {
+            logEvent(`Scan failed: ${event.detail.error}`, 'error');
+        });
+        
+        // Initial setup
+        document.addEventListener('DOMContentLoaded', () => {
+            logEvent('Test page loaded', 'info');
+            updateStatus('Waiting for widget initialization...', 'info');
+            
+            // Check widget status periodically
+            setTimeout(() => {
+                if (!window.VisionPrivacy) {
+                    updateStatus('Widget failed to initialize', 'error');
+                    logEvent('Widget initialization timeout', 'error');
+                }
+            }, 5000);
+        });
+    </script>
+</body>
+</html>
