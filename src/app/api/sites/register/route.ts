@@ -3,22 +3,61 @@ import { createSuccessResponse, createValidationErrorResponse, createDatabaseErr
 import { validateRequest, siteRegistrationSchema } from '@/lib/validation'
 import { generateApiToken, generateSiteId, isValidDomain } from '@/utils/crypto'
 import { supabaseAdmin, TABLES, handleSupabaseError } from '@/lib/supabase'
+import { withAuthMiddleware, InputSanitizer, createAuthenticatedResponse } from '@/lib/auth-middleware'
 
 export async function POST(request: NextRequest) {
+  // Apply authentication and rate limiting middleware
+  const authResult = await withAuthMiddleware(request, {
+    requireAuth: false, // Registration doesn't require existing auth
+    rateLimitType: 'registration',
+    allowedMethods: ['POST'],
+    corsOrigins: '*',
+  })
+
+  if (!authResult.success) {
+    return authResult.response
+  }
+
+  const { context } = authResult
+
   try {
     const body = await request.json()
     
+    // Sanitize input data
+    const sanitizedBody = InputSanitizer.sanitizeJson(body)
+    
     // Validate request data
-    const validation = validateRequest(siteRegistrationSchema, body)
+    const validation = validateRequest(siteRegistrationSchema, sanitizedBody)
     if (!validation.success) {
-      return createValidationErrorResponse(validation.error)
+      return createAuthenticatedResponse(
+        {
+          error: 'Validation failed',
+          message: validation.error,
+          code: 1004,
+        },
+        400,
+        context,
+        '*',
+        request
+      )
     }
     
     const { domain, wp_version, installed_plugins, detected_forms, plugin_version } = validation.data
     
-    // Validate domain format
-    if (!isValidDomain(domain)) {
-      return createValidationErrorResponse('Invalid domain format')
+    // Validate and sanitize domain
+    const sanitizedDomain = InputSanitizer.sanitizeUrl(domain)
+    if (!isValidDomain(sanitizedDomain)) {
+      return createAuthenticatedResponse(
+        {
+          error: 'Invalid domain format',
+          message: 'The provided domain is not valid',
+          code: 1004,
+        },
+        400,
+        context,
+        '*',
+        request
+      )
     }
     
     // Generate unique identifiers
@@ -31,12 +70,16 @@ export async function POST(request: NextRequest) {
       .from(TABLES.SITES)
       .insert({
         id: siteId,
-        domain,
+        domain: sanitizedDomain,
         api_token: apiToken,
-        wp_version,
-        plugin_version,
-        installed_plugins,
-        detected_forms,
+        wp_version: InputSanitizer.sanitizeString(wp_version),
+        plugin_version: InputSanitizer.sanitizeString(plugin_version),
+        installed_plugins: installed_plugins?.map(plugin => InputSanitizer.sanitizeString(plugin)) || [],
+        detected_forms: detected_forms?.map(form => ({
+          type: InputSanitizer.sanitizeString(form.type),
+          count: form.count,
+          plugin_name: form.plugin_name ? InputSanitizer.sanitizeString(form.plugin_name) : undefined
+        })),
         status: 'active'
       })
       .select()
@@ -45,19 +88,45 @@ export async function POST(request: NextRequest) {
     if (error) {
       console.error('Site registration error:', error)
       const dbError = handleSupabaseError(error)
-      return createDatabaseErrorResponse(dbError.error)
+      return createAuthenticatedResponse(
+        {
+          error: 'Database error',
+          message: dbError.error,
+          code: 1005,
+        },
+        500,
+        context,
+        '*',
+        request
+      )
     }
     
-    return createSuccessResponse({
-      site_id: siteId,
-      api_token: apiToken,
-      widget_url: widgetUrl,
-      success: true
-    }, 201)
+    return createAuthenticatedResponse(
+      {
+        site_id: siteId,
+        api_token: apiToken,
+        widget_url: widgetUrl,
+        success: true
+      },
+      201,
+      context,
+      '*',
+      request
+    )
     
   } catch (error) {
     console.error('Site registration failed:', error)
-    return createDatabaseErrorResponse('Site registration failed')
+    return createAuthenticatedResponse(
+      {
+        error: 'Registration failed',
+        message: 'Site registration failed due to an internal error',
+        code: 1005,
+      },
+      500,
+      context,
+      '*',
+      request
+    )
   }
 }
 

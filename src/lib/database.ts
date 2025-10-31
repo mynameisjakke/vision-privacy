@@ -1,4 +1,5 @@
 import { supabaseAdmin, handleSupabaseError, TABLES } from './supabase'
+import { DatabaseMonitor } from './performance'
 import type { 
   Site, 
   ConsentRecord, 
@@ -37,17 +38,29 @@ export class SitesDB {
   }
 
   static async findById(id: string): Promise<Site | null> {
-    const { data, error } = await supabase
-      .from(TABLES.SITES)
-      .select('*')
-      .eq('id', id)
-      .single()
+    const startTime = performance.now()
+    const query = `SELECT * FROM ${TABLES.SITES} WHERE id = $1`
     
-    if (error && error.code !== 'PGRST116') {
-      const { error: errorMsg } = handleSupabaseError(error)
-      throw new Error(`Failed to find site: ${errorMsg}`)
+    try {
+      const { data, error } = await supabase
+        .from(TABLES.SITES)
+        .select('*')
+        .eq('id', id)
+        .single()
+      
+      const duration = performance.now() - startTime
+      DatabaseMonitor.recordQuery(query, duration, !!error)
+      
+      if (error && error.code !== 'PGRST116') {
+        const { error: errorMsg } = handleSupabaseError(error)
+        throw new Error(`Failed to find site: ${errorMsg}`)
+      }
+      return data
+    } catch (error) {
+      const duration = performance.now() - startTime
+      DatabaseMonitor.recordQuery(query, duration, true)
+      throw error
     }
-    return data
   }
 
   // Alias for backward compatibility

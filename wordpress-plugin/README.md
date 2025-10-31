@@ -18,7 +18,7 @@ A WordPress plugin that integrates with the Vision Privacy service to provide ce
 - WordPress 5.0 or higher
 - PHP 7.4 or higher
 - Active internet connection for API communication
-- Valid Vision Privacy service account
+- No account setup required - automatic registration
 
 ## Installation
 
@@ -67,25 +67,32 @@ If automatic registration fails:
 
 ## How It Works
 
+### **Automatic Setup (No Account Required)**
+1. **Install & Activate**: Simply install the plugin - no signup needed
+2. **Automatic Registration**: Plugin automatically registers your site with Vision Privacy
+3. **Instant Widget**: Cookie banner and privacy tools work immediately
+4. **Policy Generation**: Fill in company details to enable automatic policy creation
+
+### **Behind the Scenes**
 1. **Plugin Activation**: 
-   - Creates necessary database options
    - Collects site information (domain, WordPress version, plugins, forms)
-   - Sends registration request to Vision Privacy API
-   - Stores returned site ID, API token, and widget URL
+   - Automatically registers with Vision Privacy API
+   - Receives unique site credentials and widget configuration
 
 2. **Widget Injection**:
-   - Adds JavaScript variables to the page header
-   - Loads the Vision Privacy widget script asynchronously
-   - Widget handles cookie banner display and consent management
+   - Adds privacy widget to all pages automatically
+   - Handles cookie consent and privacy policy display
+   - Works with detected forms and tracking services
 
-3. **Domain Validation**:
-   - Checks that the current domain matches the registered domain
-   - Automatically re-registers if domain changes are detected
+3. **Smart Monitoring**:
+   - Detects domain changes and re-registers automatically
+   - Monitors installed plugins and forms
+   - Updates privacy policies when site changes
 
-4. **Form Detection**:
-   - Scans for popular form plugins during registration
-   - Provides form count and type information to the API
-   - Helps generate accurate privacy policies
+4. **Company Integration**:
+   - Collects company information for legal compliance
+   - Generates GDPR/IMY compliant policies
+   - Customizes widget based on your business type
 
 ## Supported Form Plugins
 

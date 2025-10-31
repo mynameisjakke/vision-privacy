@@ -1,17 +1,56 @@
 {
   "functions": {
-    "src/pages/api/**/*.ts": {
+    "src/app/api/**/*.ts": {
       "maxDuration": 30
     }
   },
   "headers": [
     {
-      "source": "/api/(.*)",
+      "source": "/api/widget/script",
       "headers": [
-        { "key": "Access-Control-Allow-Credentials", "value": "true" },
-        { "key": "Access-Control-Allow-Origin", "value": "*" },
-        { "key": "Access-Control-Allow-Methods", "value": "GET,OPTIONS,PATCH,DELETE,POST,PUT" },
-        { "key": "Access-Control-Allow-Headers", "value": "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization" }
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=86400, s-maxage=86400"
+        },
+        {
+          "key": "Content-Type",
+          "value": "application/javascript"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        }
+      ]
+    },
+    {
+      "source": "/api/widget/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=300, s-maxage=300"
+        },
+        {
+          "key": "Vary",
+          "value": "Accept-Encoding"
+        }
+      ]
+    },
+    {
+      "source": "/api/policy/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=1800, s-maxage=1800"
+        }
+      ]
+    },
+    {
+      "source": "/api/health",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, must-revalidate"
+        }
       ]
     }
   ],

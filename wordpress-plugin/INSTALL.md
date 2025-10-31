@@ -96,7 +96,7 @@ vision-privacy/
 - WordPress 5.0+
 - PHP 7.4+
 - Active internet connection
-- Valid Vision Privacy service account
+- No account setup required - automatic registration
 
 ## Support
 

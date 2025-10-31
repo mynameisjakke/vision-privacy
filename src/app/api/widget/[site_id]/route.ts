@@ -3,6 +3,9 @@ import { createSuccessResponse, createNotFoundResponse, createValidationErrorRes
 import { validateRequest, widgetConfigSchema } from '@/lib/validation'
 import { supabaseAdmin, TABLES, handleSupabaseError } from '@/lib/supabase'
 import { SitesDB, CookieCategoriesDB, PolicyTemplatesDB } from '@/lib/database'
+import { WidgetCache, CookieCache, PolicyCache, SiteCache } from '@/lib/cache'
+import { withPerformanceMonitoring, ResponseOptimizer } from '@/lib/performance'
+import { withAuthMiddleware, createAuthenticatedResponse } from '@/lib/auth-middleware'
 
 interface WidgetConfigResponse {
   banner_html: string
@@ -25,35 +28,136 @@ interface WidgetConfigResponse {
 export async function GET(
   request: NextRequest,
   { params }: { params: { site_id: string } }
-) {
+): Promise<Response> {
+  return await withPerformanceMonitoring(`widget:${params.site_id}`, async () => {
+    const startTime = performance.now()
+    
+    // Apply authentication middleware
+    const authResult = await withAuthMiddleware(request, {
+      requireAuth: false, // Widget config is public
+      rateLimitType: 'widget',
+      allowedMethods: ['GET'],
+      corsOrigins: '*',
+    })
+
+    if (!authResult.success) {
+      return authResult.response
+    }
+
+    const { context } = authResult
+
+    try {
+      const { site_id } = params
+      
+      // Validate site_id format
+      const validation = validateRequest(widgetConfigSchema, { site_id })
+      if (!validation.success) {
+        return createAuthenticatedResponse(
+          {
+            error: 'Validation failed',
+            message: validation.error,
+            code: 1004,
+          },
+          400,
+          context,
+          '*',
+          request
+        )
+      }
+      
+      // Try to get widget config from cache first
+      let widgetConfig = await WidgetCache.getConfig(site_id)
+      let cacheHit = widgetConfig !== null
+      
+      if (!widgetConfig) {
+        // Cache miss - fetch fresh data
+        widgetConfig = await generateWidgetConfig(site_id)
+        
+        if (!widgetConfig) {
+          return createAuthenticatedResponse(
+            {
+              error: 'Not found',
+              message: 'Site not found or inactive',
+              code: 1008,
+            },
+            404,
+            context,
+            '*',
+            request
+          )
+        }
+        
+        // Cache the result
+        await WidgetCache.setConfig(site_id, widgetConfig)
+      }
+      
+      // Create response with performance headers
+      const response = createAuthenticatedResponse(
+        widgetConfig,
+        200,
+        context,
+        '*',
+        request
+      )
+      
+      // Add performance and caching headers
+      const optimizedResponse = ResponseOptimizer.addPerformanceHeaders(response, startTime, cacheHit)
+      optimizedResponse.headers.set('Cache-Control', 'public, max-age=300, s-maxage=300') // 5 minutes cache
+      optimizedResponse.headers.set('Vary', 'Accept-Encoding')
+      
+      return ResponseOptimizer.addCDNHeaders(optimizedResponse, 300) // 5 minutes CDN cache
+      
+    } catch (error) {
+      console.error('Widget config fetch failed:', error)
+      return createAuthenticatedResponse(
+        {
+          error: 'Internal error',
+          message: 'Widget configuration unavailable',
+          code: 1005,
+        },
+        500,
+        context,
+        '*',
+        request
+      )
+    }
+  })
+}
+
+async function generateWidgetConfig(siteId: string): Promise<WidgetConfigResponse | null> {
   try {
-    const { site_id } = params
-    
-    // Validate site_id format
-    const validation = validateRequest(widgetConfigSchema, { site_id })
-    if (!validation.success) {
-      return createValidationErrorResponse(validation.error)
-    }
-    
-    // Get site information
-    const site = await SitesDB.getById(site_id)
+    // Get site information with caching
+    let site: any = await SiteCache.getData(siteId)
     if (!site) {
-      return createNotFoundResponse('Site not found')
+      site = await SitesDB.getById(siteId)
+      if (!site) {
+        return null
+      }
+      
+      // Check if site is active
+      if (site.status !== 'active') {
+        return null
+      }
+      
+      // Cache site data
+      await SiteCache.setData(siteId, site)
     }
     
-    // Check if site is active
-    if (site.status !== 'active') {
-      return createNotFoundResponse('Site is not active')
+    // Get active cookie categories with caching
+    let cookieCategories: any = await CookieCache.getCategories()
+    if (!cookieCategories) {
+      cookieCategories = await CookieCategoriesDB.listActive()
+      await CookieCache.setCategories(cookieCategories)
     }
     
-    // Get active cookie categories
-    const cookieCategories = await CookieCategoriesDB.listActive()
-    
-    // Get active banner template
-    const bannerTemplate = await PolicyTemplatesDB.findActive('banner')
-    
-    // Get active policy template
-    const policyTemplate = await PolicyTemplatesDB.findActive('policy')
+    // Get active banner template with caching
+    let bannerTemplate: any = await PolicyCache.getTemplate('banner')
+    if (!bannerTemplate) {
+      bannerTemplate = await PolicyTemplatesDB.findActive('banner')
+      if (bannerTemplate) {
+        await PolicyCache.setTemplate('banner', bannerTemplate)
+      }
+    }
     
     // Generate banner HTML with site-specific data
     const bannerHtml = generateBannerHtml(bannerTemplate?.content || getDefaultBannerTemplate(), site)
@@ -62,34 +166,26 @@ export async function GET(
     const bannerCss = generateBannerCss()
     
     // Build widget configuration response
-    const widgetConfig: WidgetConfigResponse = {
+    return {
       banner_html: bannerHtml,
       banner_css: bannerCss,
-      cookie_categories: cookieCategories.map(category => ({
+      cookie_categories: cookieCategories.map((category: any) => ({
         id: category.id,
         name: category.name,
         description: category.description || '',
         is_essential: category.is_essential,
         sort_order: category.sort_order
       })),
-      privacy_policy_url: `${process.env.NEXT_PUBLIC_API_URL}/api/policy/${site_id}`,
+      privacy_policy_url: `${process.env.NEXT_PUBLIC_API_URL}/api/policy/${siteId}`,
       consent_endpoint: `${process.env.NEXT_PUBLIC_API_URL}/api/consent`,
       site_config: {
         domain: site.domain,
         scan_interval: 300000 // 5 minutes in milliseconds
       }
     }
-    
-    // Set caching headers for performance
-    const response = createSuccessResponse(widgetConfig)
-    response.headers.set('Cache-Control', 'public, max-age=300, s-maxage=300') // 5 minutes cache
-    response.headers.set('Vary', 'Accept-Encoding')
-    
-    return response
-    
   } catch (error) {
-    console.error('Widget config fetch failed:', error)
-    return createNotFoundResponse('Widget configuration unavailable')
+    console.error('Error generating widget config:', error)
+    return null
   }
 }
 

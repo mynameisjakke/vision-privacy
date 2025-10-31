@@ -3,15 +3,43 @@ import { createSuccessResponse, createValidationErrorResponse, createNotFoundRes
 import { validateRequest, consentRequestSchema } from '@/lib/validation'
 import { hashVisitorInfo, hashUserAgent, generateConsentExpiration } from '@/utils/crypto'
 import { SitesDB, ConsentRecordsDB } from '@/lib/database'
+import { withAuthMiddleware, InputSanitizer, createAuthenticatedResponse } from '@/lib/auth-middleware'
 
 export async function POST(request: NextRequest) {
+  // Apply authentication and rate limiting middleware
+  const authResult = await withAuthMiddleware(request, {
+    requireAuth: false, // Consent doesn't require auth token
+    rateLimitType: 'consent',
+    allowedMethods: ['POST'],
+    corsOrigins: '*',
+  })
+
+  if (!authResult.success) {
+    return authResult.response
+  }
+
+  const { context } = authResult
+
   try {
     const body = await request.json()
     
+    // Sanitize input data
+    const sanitizedBody = InputSanitizer.sanitizeJson(body)
+    
     // Validate request data
-    const validation = validateRequest(consentRequestSchema, body)
+    const validation = validateRequest(consentRequestSchema, sanitizedBody)
     if (!validation.success) {
-      return createValidationErrorResponse(validation.error)
+      return createAuthenticatedResponse(
+        {
+          error: 'Validation failed',
+          message: validation.error,
+          code: 1004,
+        },
+        400,
+        context,
+        '*',
+        request
+      )
     }
     
     const { site_id, visitor_hash, consent_categories, timestamp, user_agent } = validation.data
@@ -43,8 +71,8 @@ export async function POST(request: NextRequest) {
       // Update existing consent
       const updatedConsent = await ConsentRecordsDB.update(existingConsent.id, {
         consent_categories,
-        consent_timestamp: new Date(timestamp),
-        expires_at: expiresAt,
+        consent_timestamp: new Date(timestamp).toISOString(),
+        expires_at: expiresAt.toISOString(),
         user_agent_hash: userAgentHash
       })
       
@@ -52,19 +80,25 @@ export async function POST(request: NextRequest) {
         return createDatabaseErrorResponse('Failed to update consent')
       }
       
-      return createSuccessResponse({
-        consent_id: updatedConsent.id,
-        expires_at: expiresAt.toISOString(),
-        updated: true
-      })
+      return createAuthenticatedResponse(
+        {
+          consent_id: updatedConsent.id,
+          expires_at: expiresAt.toISOString(),
+          updated: true
+        },
+        200,
+        context,
+        '*',
+        request
+      )
     } else {
       // Create new consent record
       const newConsent = await ConsentRecordsDB.create({
         site_id,
         visitor_hash: visitorHash,
         consent_categories,
-        consent_timestamp: new Date(timestamp),
-        expires_at: expiresAt,
+        consent_timestamp: new Date(timestamp).toISOString(),
+        expires_at: expiresAt.toISOString(),
         user_agent_hash: userAgentHash
       })
       
@@ -72,11 +106,17 @@ export async function POST(request: NextRequest) {
         return createDatabaseErrorResponse('Failed to create consent record')
       }
       
-      return createSuccessResponse({
-        consent_id: newConsent.id,
-        expires_at: expiresAt.toISOString(),
-        created: true
-      }, 201)
+      return createAuthenticatedResponse(
+        {
+          consent_id: newConsent.id,
+          expires_at: expiresAt.toISOString(),
+          created: true
+        },
+        201,
+        context,
+        '*',
+        request
+      )
     }
     
   } catch (error) {
