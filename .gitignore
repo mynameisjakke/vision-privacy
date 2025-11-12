@@ -61,3 +61,19 @@ jspm_packages/
 
 # Kiro IDE specs and internal files
 .kiro/
+
+# Development documentation and debug files
+DEBUG-*.md
+READY-*.md
+*-SUMMARY.md
+*-DONE.md
+*-EXPLAINED.md
+CLIENT-FACING-*.md
+
+# Test files
+public/test-*.html
+public/test-*.js
+public/test-*.css
+
+# Build info
+tsconfig.tsbuildinfo
