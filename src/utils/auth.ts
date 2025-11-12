@@ -69,3 +69,40 @@ export async function validateAdminToken(request: NextRequest): Promise<{
     return { valid: false, error: 'Admin token validation failed' }
   }
 }
+
+/**
+ * Extract visitor IP address from request headers
+ */
+export function extractVisitorIP(request: NextRequest): string {
+  const forwarded = request.headers.get('x-forwarded-for')
+  const realIP = request.headers.get('x-real-ip')
+  const remoteAddr = request.headers.get('remote-addr')
+  
+  if (forwarded) {
+    // x-forwarded-for can contain multiple IPs, take the first one
+    return forwarded.split(',')[0].trim()
+  }
+  
+  return realIP || remoteAddr || 'unknown'
+}
+
+/**
+ * Check if origin is allowed for CORS
+ */
+export function isAllowedOrigin(origin: string | null): boolean {
+  if (!origin) return false
+  
+  const allowedOrigins = process.env.CORS_ALLOWED_ORIGINS?.split(',') || []
+  
+  // Allow localhost in development
+  if (process.env.NODE_ENV === 'development') {
+    if (origin.includes('localhost') || origin.includes('127.0.0.1')) {
+      return true
+    }
+  }
+  
+  return allowedOrigins.some(allowed => 
+    allowed.trim() === origin || 
+    (allowed.startsWith('*.') && origin.endsWith(allowed.slice(1)))
+  )
+}

@@ -3,6 +3,9 @@ import { createSuccessResponse } from '@/utils/response'
 import { supabase } from '@/lib/supabase'
 import { HealthChecker, PerformanceMonitor } from '@/lib/performance'
 import { CacheManager } from '@/lib/cache'
+import { Logger } from '@/lib/logger'
+import { Analytics } from '@/lib/analytics'
+import { AlertManager } from '@/lib/alerting'
 
 export async function GET(request: NextRequest) {
   try {
@@ -23,6 +26,11 @@ export async function GET(request: NextRequest) {
     const statusCode = overallStatus === 'healthy' ? 200 : 
                       overallStatus === 'degraded' ? 200 : 503
     
+    // Get monitoring data
+    const errorMetrics = Logger.getErrorMetrics()
+    const usageMetrics = Analytics.getUsageMetrics('1h')
+    const activeAlerts = AlertManager.getActiveAlerts()
+
     const response = createSuccessResponse({
       status: overallStatus,
       timestamp: new Date().toISOString(),
@@ -32,13 +40,27 @@ export async function GET(request: NextRequest) {
       checks: healthStatus.checks,
       performance: {
         endpoints: performanceMetrics.slice(0, 10), // Top 10 endpoints
-        total_requests: performanceMetrics.reduce((sum, m) => sum + m.requests, 0)
+        total_requests: performanceMetrics.reduce((sum, m) => sum + m.requests, 0),
+        average_response_time: performanceMetrics.length > 0 
+          ? performanceMetrics.reduce((sum, m) => sum + m.averageTime, 0) / performanceMetrics.length 
+          : 0
       },
       cache: cacheStats,
+      monitoring: {
+        error_rate: errorMetrics.total > 0 
+          ? ((errorMetrics.byLevel[3] + errorMetrics.byLevel[4]) / errorMetrics.total) * 100 
+          : 0,
+        total_errors: errorMetrics.byLevel[3] + errorMetrics.byLevel[4],
+        active_alerts: activeAlerts.length,
+        critical_alerts: activeAlerts.filter(a => a.severity === 'critical').length,
+        api_calls_last_hour: usageMetrics.apiCalls.total
+      },
       environment: {
         node_env: process.env.NODE_ENV,
         redis_enabled: !!process.env.UPSTASH_REDIS_REST_URL,
-        rate_limiting_enabled: process.env.RATE_LIMIT_ENABLED === 'true'
+        rate_limiting_enabled: process.env.RATE_LIMIT_ENABLED === 'true',
+        monitoring_enabled: true,
+        alerting_enabled: AlertManager.getRules().length > 0
       }
     }, statusCode)
     

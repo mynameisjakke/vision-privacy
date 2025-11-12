@@ -366,7 +366,7 @@ export class HealthChecker {
 }
 
 // Clean up old metrics periodically
-if (typeof window === 'undefined') { // Only run on server
+if (typeof window === 'undefined' && process.env.NODE_ENV !== 'test') { // Only run on server, not in tests
   setInterval(() => {
     PerformanceMonitor.cleanup()
   }, 60 * 60 * 1000) // Clean up every hour

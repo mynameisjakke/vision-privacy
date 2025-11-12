@@ -9,6 +9,11 @@ export async function GET(
 ) {
   try {
     const { site_id } = params
+    const { searchParams } = new URL(request.url)
+    
+    // Get query parameters
+    const format = searchParams.get('format') || 'html' // 'html' or 'json'
+    const type = searchParams.get('type') || 'privacy' // 'privacy' or 'cookie'
     
     // Validate site_id format
     const validation = validateRequest(widgetConfigSchema, { site_id })
@@ -27,27 +32,39 @@ export async function GET(
       return createNotFoundResponse('Site is not active')
     }
     
-    // Get active policy template
-    const policyTemplate = await PolicyTemplatesDB.getActiveByType('policy')
+    // Get appropriate template based on type
+    // Note: 'policy' template type is used for both cookie and privacy policies
+    // The type parameter determines which default template to use if no custom template exists
+    const policyTemplate = await PolicyTemplatesDB.findActive('policy')
     
     // Get latest client scan data for this site
     const latestScan = await ClientScansDB.getLatestBySiteId(site_id)
     
     // Generate dynamic policy content
     const policyContent = generatePolicyContent(
-      policyTemplate?.content || getDefaultPolicyTemplate(),
+      policyTemplate?.content || getDefaultPolicyTemplate(type),
       site,
       latestScan
     )
     
-    // Return HTML response for direct viewing
+    // Return JSON response for modal display
+    if (format === 'json') {
+      return createSuccessResponse({
+        policy_content: policyContent,
+        type: type,
+        last_updated: new Date().toISOString(),
+        site_domain: new URL(site.domain).hostname
+      })
+    }
+    
+    // Return HTML response for direct viewing (backward compatibility)
     const htmlResponse = `
       <!DOCTYPE html>
       <html lang="en">
       <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Privacy Policy - ${new URL(site.domain).hostname}</title>
+        <title>${type === 'cookie' ? 'Cookie Policy' : 'Privacy Policy'} - ${new URL(site.domain).hostname}</title>
         <style>
           body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -125,9 +142,10 @@ function generateServicesSection(scripts: any[], cookies: any[]): string {
       return acc
     }, {})
     
-    Object.entries(servicesByType).forEach(([type, services]: [string, any[]]) => {
+    Object.entries(servicesByType).forEach(([type, services]) => {
+      const serviceList = services as any[]
       html += `<li class="service-item"><strong>${capitalizeFirst(type)}:</strong> `
-      const domains = [...new Set(services.map(s => s.domain))]
+      const domains = [...new Set(serviceList.map(s => s.domain))]
       html += domains.join(', ')
       html += '</li>'
     })
@@ -145,9 +163,10 @@ function generateServicesSection(scripts: any[], cookies: any[]): string {
       return acc
     }, {})
     
-    Object.entries(cookiesByCategory).forEach(([category, cookieList]: [string, any[]]) => {
+    Object.entries(cookiesByCategory).forEach(([category, cookieList]) => {
+      const cookies = cookieList as any[]
       html += `<li class="service-item"><strong>${capitalizeFirst(category)} Cookies:</strong> `
-      html += `${cookieList.length} cookie(s) from ${[...new Set(cookieList.map(c => c.domain))].join(', ')}`
+      html += `${cookies.length} cookie(s) from ${[...new Set(cookies.map(c => c.domain))].join(', ')}`
       html += '</li>'
     })
     
@@ -162,7 +181,66 @@ function capitalizeFirst(str: string): string {
   return str.charAt(0).toUpperCase() + str.slice(1)
 }
 
-function getDefaultPolicyTemplate(): string {
+function getDefaultPolicyTemplate(type: string = 'privacy'): string {
+  if (type === 'cookie') {
+    return `
+      <h1>Cookie Policy for {{SITE_NAME}}</h1>
+      <p class="last-updated">Last updated: {{LAST_UPDATED}}</p>
+      
+      <div class="section">
+        <h2>1. What Are Cookies</h2>
+        <p>Cookies are small text files that are placed on your device when you visit {{SITE_NAME}}. They help us provide you with a better experience by remembering your preferences and understanding how you use our website.</p>
+      </div>
+      
+      <div class="section">
+        <h2>2. Types of Cookies We Use</h2>
+        <p>We use the following types of cookies on our website:</p>
+        <ul>
+          <li><strong>Essential Cookies:</strong> These are necessary for the website to function properly and cannot be disabled</li>
+          <li><strong>Analytics Cookies:</strong> These help us understand how visitors interact with our website by collecting and reporting information anonymously</li>
+          <li><strong>Marketing Cookies:</strong> These are used to deliver relevant advertisements and track advertising campaign performance</li>
+          <li><strong>Functional Cookies:</strong> These enable enhanced functionality and personalization, such as remembering your preferences</li>
+        </ul>
+      </div>
+      
+      <div class="section">
+        <h2>3. Cookies Currently in Use</h2>
+        <p>Below are the cookies and third-party services currently detected on our website:</p>
+        {{DETECTED_SERVICES}}
+      </div>
+      
+      <div class="section">
+        <h2>4. Managing Your Cookie Preferences</h2>
+        <p>You can control and manage cookies in several ways:</p>
+        <ul>
+          <li>Use our cookie banner to accept or decline non-essential cookies</li>
+          <li>Modify your cookie preferences at any time through our cookie settings</li>
+          <li>Configure your browser settings to block or delete cookies</li>
+          <li>Use browser extensions or privacy tools to manage cookies</li>
+        </ul>
+        <p>Please note that blocking certain cookies may impact your experience on our website.</p>
+      </div>
+      
+      <div class="section">
+        <h2>5. Cookie Duration</h2>
+        <p>Your cookie preferences are stored for up to 12 months. After this period, you will be asked to renew your consent.</p>
+      </div>
+      
+      <div class="section">
+        <h2>6. Contact Information</h2>
+        <p>If you have any questions about our use of cookies, please contact us at:</p>
+        <p>Email: {{CONTACT_EMAIL}}</p>
+        <p>Website: {{SITE_DOMAIN}}</p>
+      </div>
+      
+      <div class="section">
+        <h2>7. Updates to This Policy</h2>
+        <p>We may update this Cookie Policy from time to time to reflect changes in our practices or for legal reasons. Any changes will be posted on this page with an updated revision date.</p>
+      </div>
+    `
+  }
+  
+  // Default privacy policy template
   return `
     <h1>Privacy Policy for {{SITE_NAME}}</h1>
     <p class="last-updated">Last updated: {{LAST_UPDATED}}</p>

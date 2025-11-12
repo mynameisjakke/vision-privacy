@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { validateApiToken, validateAdminToken, extractVisitorIP, isAllowedOrigin } from '@/utils/auth'
+import { validateApiToken, extractVisitorIP, isAllowedOrigin } from '@/utils/auth'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { validateRequest, apiTokenSchema } from '@/lib/validation'
 

@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
     const type = searchParams.get('type') || 'all'
     const limit = parseInt(searchParams.get('limit') || '50')
 
-    let metrics: any = {}
+    const metrics: any = {}
 
     if (type === 'all' || type === 'endpoints') {
       const endpointMetrics = PerformanceMonitor.getAllMetrics()

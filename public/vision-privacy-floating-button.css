@@ -1,0 +1,183 @@
+/**
+ * Vision Privacy - Floating Settings Button Styles
+ * Persistent button for changing cookie preferences
+ */
+
+.vision-privacy-floating-btn {
+  /* Positioning */
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 999998;
+  
+  /* Layout */
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.5rem;
+  
+  /* Styling */
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 50px;
+  box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+  
+  /* Typography */
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1;
+  
+  /* Interaction */
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  
+  /* Animation */
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: slideInFromRight 0.5s ease-out;
+}
+
+/* Slide in animation */
+@keyframes slideInFromRight {
+  from {
+    transform: translateX(150px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Hover state */
+.vision-privacy-floating-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 25px rgba(102, 126, 234, 0.5);
+}
+
+/* Active/pressed state */
+.vision-privacy-floating-btn:active {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+/* Focus state for accessibility */
+.vision-privacy-floating-btn:focus {
+  outline: 3px solid #667eea;
+  outline-offset: 3px;
+}
+
+.vision-privacy-floating-btn:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Icon */
+.floating-btn-icon {
+  font-size: 1.5rem;
+  line-height: 1;
+  animation: wiggle 2s ease-in-out infinite;
+}
+
+/* Wiggle animation for icon */
+@keyframes wiggle {
+  0%, 100% {
+    transform: rotate(0deg);
+  }
+  10%, 30% {
+    transform: rotate(-10deg);
+  }
+  20%, 40% {
+    transform: rotate(10deg);
+  }
+  50%, 60%, 70%, 80%, 90% {
+    transform: rotate(0deg);
+  }
+}
+
+/* Text */
+.floating-btn-text {
+  white-space: nowrap;
+}
+
+/* Mobile styles */
+@media (max-width: 768px) {
+  .vision-privacy-floating-btn {
+    /* Smaller on mobile */
+    bottom: 15px;
+    right: 15px;
+    padding: 1rem;
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    justify-content: center;
+  }
+  
+  /* Hide text on mobile, show only icon */
+  .floating-btn-text {
+    display: none;
+  }
+  
+  .floating-btn-icon {
+    font-size: 1.75rem;
+  }
+}
+
+/* Tablet styles */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .vision-privacy-floating-btn {
+    padding: 0.875rem 1.25rem;
+    font-size: 0.9rem;
+  }
+  
+  .floating-btn-icon {
+    font-size: 1.35rem;
+  }
+}
+
+/* Hide when banner is visible */
+.vision-privacy-banner-visible .vision-privacy-floating-btn {
+  display: none !important;
+}
+
+/* Reduced motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .vision-privacy-floating-btn {
+    animation: none;
+    transition: none;
+  }
+  
+  .floating-btn-icon {
+    animation: none;
+  }
+  
+  .vision-privacy-floating-btn:hover {
+    transform: none;
+  }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+  .vision-privacy-floating-btn {
+    border: 2px solid white;
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .vision-privacy-floating-btn {
+    box-shadow: 0 4px 20px rgba(102, 126, 234, 0.6);
+  }
+  
+  .vision-privacy-floating-btn:hover {
+    box-shadow: 0 6px 25px rgba(102, 126, 234, 0.7);
+  }
+}
+
+/* Print styles - hide button when printing */
+@media print {
+  .vision-privacy-floating-btn {
+    display: none !important;
+  }
+}

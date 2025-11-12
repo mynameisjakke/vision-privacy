@@ -15,7 +15,18 @@
     "test:integration": "jest --selectProjects=integration --runInBand",
     "test:unit": "jest --selectProjects=unit",
     "test:api": "tsx src/scripts/test-api.ts",
-    "test:db": "tsx src/lib/test-db.ts"
+    "test:db": "tsx src/lib/test-db.ts",
+    "deploy": "./scripts/deploy.sh",
+    "deploy:prod": "./scripts/deploy.sh production",
+    "deploy:preview": "./scripts/deploy.sh preview",
+    "db:migrate": "./scripts/migrate-db.sh migrate",
+    "db:reset": "./scripts/migrate-db.sh reset",
+    "db:types": "./scripts/migrate-db.sh types",
+    "env:setup": "./scripts/setup-env.sh",
+    "env:dev": "./scripts/setup-env.sh dev",
+    "env:prod": "./scripts/setup-env.sh prod",
+    "env:validate": "./scripts/setup-env.sh validate",
+    "env:status": "./scripts/setup-env.sh status"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.38.0",
@@ -38,6 +49,7 @@
     "eslint": "^8.52.0",
     "eslint-config-next": "^14.0.0",
     "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
     "jest-environment-node": "^29.7.0",
     "jsdom": "^27.0.1",
     "ts-jest": "^29.4.5",
