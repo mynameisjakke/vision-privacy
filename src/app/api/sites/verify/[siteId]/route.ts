@@ -56,9 +56,8 @@ export async function GET(
     // Query database for site
     const { data: site, error } = await supabaseAdmin
       .from(TABLES.SITES)
-      .select('id, domain, widget_url, status, api_token, updated_at')
+      .select('id, domain, status, api_token, updated_at')
       .eq('id', siteId)
-      .is('deleted_at', null)
       .single()
 
     if (error || !site) {

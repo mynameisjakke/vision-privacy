@@ -72,7 +72,6 @@ export async function POST(request: NextRequest) {
         .from(TABLES.SITES)
         .select('id, api_token')
         .eq('id', existingSiteId)
-        .is('deleted_at', null)
         .single()
       
       if (existingSite) {
@@ -155,7 +154,6 @@ export async function POST(request: NextRequest) {
       .from(TABLES.SITES)
       .select('id, api_token')
       .eq('domain', sanitizedDomain)
-      .is('deleted_at', null)
       .single()
     
     if (existingByDomain) {
