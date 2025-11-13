@@ -215,16 +215,16 @@ function getDefaultBannerTemplate(): string {
           🍪
         </div>
         <div class="vp-banner-text">
-          <p>By clicking "Accept", you agree to the storing of cookies on your device. <button class="vp-policy-link" data-policy="privacy" type="button">Privacy Policy</button> • <button class="vp-policy-link" data-policy="cookie" type="button">Cookie Policy</button></p>
+          <p>Genom att klicka på "Acceptera" godkänner du lagring av cookies på din enhet. <button class="vp-policy-link" data-policy="privacy" type="button">Integritetspolicy</button> • <button class="vp-policy-link" data-policy="cookie" type="button">Cookiepolicy</button></p>
         </div>
         <div class="vp-banner-actions">
-          <button id="vp-settings" class="vp-btn vp-btn-icon" aria-label="Cookie Settings" title="Cookie Settings">
+          <button data-action="customize" class="vp-btn vp-btn-icon" aria-label="Cookie-inställningar" title="Cookie-inställningar">
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M17.43 10.98C17.47 10.66 17.5 10.34 17.5 10C17.5 9.66 17.47 9.34 17.43 9.02L19.54 7.37C19.73 7.22 19.78 6.95 19.66 6.73L17.66 3.27C17.54 3.05 17.27 2.97 17.05 3.05L14.56 4.05C14.04 3.65 13.48 3.32 12.87 3.07L12.49 0.42C12.46 0.18 12.25 0 12 0H8C7.75 0 7.54 0.18 7.51 0.42L7.13 3.07C6.52 3.32 5.96 3.66 5.44 4.05L2.95 3.05C2.72 2.96 2.46 3.05 2.34 3.27L0.34 6.73C0.21 6.95 0.27 7.22 0.46 7.37L2.57 9.02C2.53 9.34 2.5 9.67 2.5 10C2.5 10.33 2.53 10.66 2.57 10.98L0.46 12.63C0.27 12.78 0.22 13.05 0.34 13.27L2.34 16.73C2.46 16.95 2.73 17.03 2.95 16.95L5.44 15.95C5.96 16.35 6.52 16.68 7.13 16.93L7.51 19.58C7.54 19.82 7.75 20 8 20H12C12.25 20 12.46 19.82 12.49 19.58L12.87 16.93C13.48 16.68 14.04 16.34 14.56 15.95L17.05 16.95C17.28 17.04 17.54 16.95 17.66 16.73L19.66 13.27C19.78 13.05 19.73 12.78 19.54 12.63L17.43 10.98ZM10 13.5C8.07 13.5 6.5 11.93 6.5 10C6.5 8.07 8.07 6.5 10 6.5C11.93 6.5 13.5 8.07 13.5 10C13.5 11.93 11.93 13.5 10 13.5Z" fill="currentColor"/>
             </svg>
           </button>
-          <button id="vp-reject-all" class="vp-btn vp-btn-secondary">Reject</button>
-          <button id="vp-accept-all" class="vp-btn vp-btn-primary">Accept</button>
+          <button data-action="reject-all" class="vp-btn vp-btn-secondary">Avvisa</button>
+          <button data-action="accept-all" class="vp-btn vp-btn-primary">Acceptera</button>
         </div>
       </div>
     </div>
@@ -232,7 +232,7 @@ function getDefaultBannerTemplate(): string {
     <div id="vp-settings-modal" class="vp-modal" style="display: none;">
       <div class="vp-modal-content">
         <div class="vp-modal-header">
-          <h3>Cookie Settings</h3>
+          <h3>Cookie-inställningar</h3>
           <button id="vp-close-settings" class="vp-close">&times;</button>
         </div>
         <div class="vp-modal-body">
@@ -240,13 +240,13 @@ function getDefaultBannerTemplate(): string {
         </div>
         <div class="vp-modal-footer">
           <div class="vp-modal-footer-actions">
-            <button id="vp-save-settings" class="vp-btn vp-btn-primary">Save Settings</button>
-            <button id="vp-cancel-settings" class="vp-btn vp-btn-secondary">Cancel</button>
+            <button id="vp-save-settings" class="vp-btn vp-btn-primary">Spara inställningar</button>
+            <button id="vp-cancel-settings" class="vp-btn vp-btn-secondary">Avbryt</button>
           </div>
           <div class="vp-modal-footer-links">
-            <button class="vp-policy-link" data-policy="privacy" type="button">Privacy Policy</button>
+            <button class="vp-policy-link" data-policy="privacy" type="button">Integritetspolicy</button>
             <span class="vp-separator">•</span>
-            <button class="vp-policy-link" data-policy="cookie" type="button">Cookie Policy</button>
+            <button class="vp-policy-link" data-policy="cookie" type="button">Cookiepolicy</button>
           </div>
           <div class="vp-branding">
             <a href="https://visionmedia.io" target="_blank" rel="noopener noreferrer">Drivs av Vision Media</a>
@@ -260,16 +260,16 @@ function getDefaultBannerTemplate(): string {
       <div class="vp-modal-content">
         <div class="vp-modal-header">
           <h3 id="vp-policy-title"></h3>
-          <button id="vp-close-policy" class="vp-close" aria-label="Close policy">&times;</button>
+          <button id="vp-close-policy" class="vp-close" aria-label="Stäng policy">&times;</button>
         </div>
         <div class="vp-modal-body">
           <div id="vp-policy-loading" class="vp-loading" role="status" aria-live="polite">
             <span class="vp-spinner"></span>
-            <p>Loading policy...</p>
+            <p>Laddar policy...</p>
           </div>
           <div id="vp-policy-content" class="vp-policy-text" style="display: none;"></div>
           <div id="vp-policy-error" class="vp-error" style="display: none;" role="alert" aria-live="assertive">
-            <p>Unable to load policy. Please try again later.</p>
+            <p>Det gick inte att ladda policyn. Försök igen senare.</p>
           </div>
           <div class="vp-branding">
             <a href="https://visionmedia.io" target="_blank" rel="noopener noreferrer">Drivs av Vision Media</a>
@@ -1221,54 +1221,57 @@ function getFloatingButtonCss(): string {
   return `
 .vision-privacy-floating-btn {
   position: fixed;
-  bottom: 20px;
-  right: 20px;
+  bottom: 24px;
+  left: 24px;
   z-index: 999998;
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 1rem 1.5rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  padding: 0;
+  background: #ffffff;
+  color: #666;
   border: none;
-  border-radius: 50px;
-  box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  font-size: 0.95rem;
-  font-weight: 600;
+  font-size: 28px;
   line-height: 1;
   cursor: pointer;
   user-select: none;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  animation: slideInFromRight 0.5s ease-out;
+  animation: slideInFromLeft 0.5s ease-out;
 }
 
-@keyframes slideInFromRight {
-  from { transform: translateX(150px); opacity: 0; }
+@keyframes slideInFromLeft {
+  from { transform: translateX(-100px); opacity: 0; }
   to { transform: translateX(0); opacity: 1; }
 }
 
 .vision-privacy-floating-btn:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 6px 25px rgba(102, 126, 234, 0.5);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15), 0 4px 12px rgba(0, 0, 0, 0.1);
+  background: #f8f8f8;
 }
 
 .vision-privacy-floating-btn:active {
-  transform: translateY(-1px);
+  transform: translateY(0);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .vision-privacy-floating-btn:focus {
-  outline: 3px solid #667eea;
+  outline: 3px solid #000;
   outline-offset: 3px;
 }
 
 .floating-btn-icon {
-  font-size: 1.5rem;
+  font-size: 28px;
   line-height: 1;
-  animation: wiggle 2s ease-in-out infinite;
+  animation: vp-cookie-wiggle 2s ease-in-out infinite;
 }
 
-@keyframes wiggle {
+@keyframes vp-cookie-wiggle {
   0%, 100% { transform: rotate(0deg); }
   10%, 30% { transform: rotate(-10deg); }
   20%, 40% { transform: rotate(10deg); }
@@ -1276,40 +1279,38 @@ function getFloatingButtonCss(): string {
 }
 
 .floating-btn-text {
-  white-space: nowrap;
+  display: none;
 }
 
 @media (max-width: 768px) {
   .vision-privacy-floating-btn {
-    bottom: 15px;
-    right: 15px;
-    padding: 1rem;
-    border-radius: 50%;
-    width: 60px;
-    height: 60px;
-    justify-content: center;
+    bottom: 16px;
+    left: 16px;
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
   }
-  
-  .floating-btn-text {
-    display: none;
+  .floating-btn-icon { font-size: 24px; }
+}
+
+@media (max-width: 480px) {
+  .vision-privacy-floating-btn {
+    bottom: 12px;
+    left: 12px;
+    width: 44px;
+    height: 44px;
   }
-  
-  .floating-btn-icon {
-    font-size: 1.75rem;
-  }
+  .floating-btn-icon { font-size: 22px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .vision-privacy-floating-btn,
-  .floating-btn-icon {
-    animation: none;
-  }
+  .vision-privacy-floating-btn { animation: none; transition: none; }
+  .floating-btn-icon { animation: none; }
+  .vision-privacy-floating-btn:hover { transform: none; }
 }
 
 @media print {
-  .vision-privacy-floating-btn {
-    display: none !important;
-  }
+  .vision-privacy-floating-btn { display: none !important; }
 }
   `.trim()
 }
