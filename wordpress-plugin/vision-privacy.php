@@ -4,8 +4,8 @@
  * Plugin URI: https://visionmedia.se
  * Description: Centralized privacy and cookie policy management for GDPR/IMY compliance
  * Version: 1.0.0
- * Author: Vision Media
- * Author URI: https://visionmedia.se
+ * Author: Jakob Bourhil @ Vision Media
+ * Author URI: https://visionmedia.io
  * License: GPL v2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain: vision-privacy

@@ -80,4 +80,4 @@ public/test-*.js
 public/test-*.css
 
 # Build info
-tsconfig.tsbuildinfo
+tsconfig.tsbuildinfosupabase/.temp/
