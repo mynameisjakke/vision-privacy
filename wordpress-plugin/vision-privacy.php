@@ -3,7 +3,7 @@
  * Plugin Name: Vision Privacy
  * Plugin URI: https://visionmedia.se
  * Description: Centralized privacy and cookie policy management for GDPR/IMY compliance
- * Version: 1.0.3
+ * Version: 1.0.5
  * Author: Jakob Bourhil @ Vision Media
  * Author URI: https://visionmedia.io
  * License: GPL v2 or later
@@ -22,7 +22,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('VISION_PRIVACY_VERSION', '1.0.3');
+define('VISION_PRIVACY_VERSION', '1.0.5');
 define('VISION_PRIVACY_PLUGIN_FILE', __FILE__);
 define('VISION_PRIVACY_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('VISION_PRIVACY_PLUGIN_URL', plugin_dir_url(__FILE__));
@@ -93,6 +93,7 @@ class VisionPrivacyPlugin {
         add_action('wp_ajax_vision_privacy_register', array($this, 'ajax_register_site'));
         add_action('wp_ajax_vision_privacy_test_connection', array($this, 'ajax_test_connection'));
         add_action('wp_ajax_vision_privacy_save_company', array($this, 'ajax_save_company_info'));
+        add_action('wp_ajax_vision_privacy_clear_error', array($this, 'ajax_clear_error'));
         
         // Add shortcode for manual widget placement
         add_shortcode('vision_privacy_widget', array($this, 'widget_shortcode'));
@@ -135,9 +136,27 @@ class VisionPrivacyPlugin {
     
     /**
      * Register site with Vision Privacy API
+     * Checks if site is already registered before creating new registration
      */
     public function register_site() {
         try {
+            // Check if we already have a site_id
+            if (!empty($this->site_id) && !empty($this->api_token)) {
+                // Verify existing registration is still valid
+                $is_valid = $this->verify_existing_registration();
+                
+                if ($is_valid) {
+                    // Registration is valid, no need to re-register
+                    update_option('vision_privacy_registration_status', 'registered');
+                    update_option('vision_privacy_last_error', '');
+                    return true;
+                }
+                
+                // If not valid, clear old data and proceed with new registration
+                error_log('Vision Privacy: Existing registration invalid, creating new registration');
+            }
+            
+            // Prepare site data for registration
             $site_data = array(
                 'domain' => $this->get_site_domain(),
                 'wp_version' => get_bloginfo('version'),
@@ -158,11 +177,18 @@ class VisionPrivacyPlugin {
                 'company_info' => $this->get_company_info()
             );
             
+            // If we have an existing site_id, include it to update instead of creating duplicate
+            if (!empty($this->site_id)) {
+                $site_data['site_id'] = $this->site_id;
+            }
+            
             $response = wp_remote_post($this->api_endpoint . '/api/sites/register', array(
                 'body' => json_encode($site_data),
                 'headers' => array(
                     'Content-Type' => 'application/json',
-                    'User-Agent' => 'VisionPrivacy-WP/' . VISION_PRIVACY_VERSION
+                    'User-Agent' => 'VisionPrivacy-WP/' . VISION_PRIVACY_VERSION,
+                    // Include auth token if we have one (for updates)
+                    'Authorization' => !empty($this->api_token) ? 'Bearer ' . $this->api_token : ''
                 ),
                 'timeout' => 30,
                 'sslverify' => true
@@ -208,6 +234,63 @@ class VisionPrivacyPlugin {
             // Log error for debugging
             error_log('Vision Privacy Registration Error: ' . $error_message);
             
+            return false;
+        }
+    }
+    
+    /**
+     * Verify if existing registration is still valid
+     * 
+     * @return bool True if registration is valid, false otherwise
+     */
+    private function verify_existing_registration() {
+        if (empty($this->site_id) || empty($this->api_token)) {
+            return false;
+        }
+        
+        try {
+            // Call API to verify site registration
+            $response = wp_remote_get(
+                $this->api_endpoint . '/api/sites/verify/' . $this->site_id,
+                array(
+                    'headers' => array(
+                        'Content-Type' => 'application/json',
+                        'Authorization' => 'Bearer ' . $this->api_token,
+                        'User-Agent' => 'VisionPrivacy-WP/' . VISION_PRIVACY_VERSION
+                    ),
+                    'timeout' => 15,
+                    'sslverify' => true
+                )
+            );
+            
+            if (is_wp_error($response)) {
+                error_log('Vision Privacy: Verification failed - ' . $response->get_error_message());
+                return false;
+            }
+            
+            $response_code = wp_remote_retrieve_response_code($response);
+            
+            // 200 means valid, 404 means not found, 401 means unauthorized
+            if ($response_code === 200) {
+                $data = json_decode(wp_remote_retrieve_body($response), true);
+                
+                // Verify response structure
+                if ($data && isset($data['success']) && $data['success']) {
+                    // Update widget URL if it changed
+                    if (isset($data['widget_url']) && $data['widget_url'] !== $this->widget_url) {
+                        update_option('vision_privacy_widget_url', $data['widget_url']);
+                        $this->widget_url = $data['widget_url'];
+                    }
+                    
+                    return true;
+                }
+            }
+            
+            // Any other response code means invalid
+            return false;
+            
+        } catch (Exception $e) {
+            error_log('Vision Privacy: Verification exception - ' . $e->getMessage());
             return false;
         }
     }
@@ -618,6 +701,25 @@ class VisionPrivacyPlugin {
         wp_send_json(array(
             'success' => $response_code === 200,
             'message' => $response_code === 200 ? 'Connection successful!' : 'API returned HTTP ' . $response_code
+        ));
+    }
+    
+    /**
+     * AJAX handler for clearing error messages
+     */
+    public function ajax_clear_error() {
+        check_ajax_referer('vision_privacy_admin', 'nonce');
+        
+        if (!current_user_can('manage_options')) {
+            wp_die('Unauthorized');
+        }
+        
+        // Clear the error message
+        update_option('vision_privacy_last_error', '');
+        
+        wp_send_json(array(
+            'success' => true,
+            'message' => 'Felmeddelande rensat'
         ));
     }
     

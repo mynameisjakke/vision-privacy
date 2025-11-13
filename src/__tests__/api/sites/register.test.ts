@@ -258,6 +258,239 @@ describe('/api/sites/register', () => {
         request
       )
     })
+
+    it('should update existing site when site_id is provided', async () => {
+      const existingSiteId = 'site_existing123'
+      const existingToken = 'token_existing456'
+      const updateData = {
+        ...validRegistrationData,
+        site_id: existingSiteId
+      }
+
+      mockValidateRequest.mockReturnValue({
+        success: true,
+        data: validRegistrationData
+      })
+
+      // Mock existing site lookup
+      mockSupabaseAdmin.from.mockReturnValueOnce({
+        select: jest.fn().mockReturnValue({
+          eq: jest.fn().mockReturnValue({
+            is: jest.fn().mockReturnValue({
+              single: jest.fn().mockResolvedValue({
+                data: { id: existingSiteId, api_token: existingToken },
+                error: null
+              })
+            })
+          })
+        })
+      })
+
+      // Mock update operation
+      mockSupabaseAdmin.from.mockReturnValueOnce({
+        update: jest.fn().mockReturnValue({
+          eq: jest.fn().mockReturnValue({
+            select: jest.fn().mockReturnValue({
+              single: jest.fn().mockResolvedValue({
+                data: { id: existingSiteId, ...validRegistrationData },
+                error: null
+              })
+            })
+          })
+        })
+      })
+
+      const request = new NextRequest('http://localhost:3000/api/sites/register', {
+        method: 'POST',
+        headers: {
+          authorization: `Bearer ${existingToken}`
+        },
+        body: JSON.stringify(updateData)
+      })
+
+      const response = await POST(request)
+
+      expect(mockCreateAuthenticatedResponse).toHaveBeenCalledWith(
+        {
+          site_id: existingSiteId,
+          api_token: existingToken,
+          widget_url: `${process.env.NEXT_PUBLIC_API_URL}/api/widget/script`,
+          success: true,
+          updated: true
+        },
+        200,
+        expect.any(Object),
+        '*',
+        request
+      )
+    })
+
+    it('should return existing site if domain already registered', async () => {
+      const existingSiteId = 'site_existing789'
+      const existingToken = 'token_existing012'
+
+      mockValidateRequest.mockReturnValue({
+        success: true,
+        data: validRegistrationData
+      })
+
+      // Mock domain check - site exists
+      mockSupabaseAdmin.from.mockReturnValueOnce({
+        select: jest.fn().mockReturnValue({
+          eq: jest.fn().mockReturnValue({
+            is: jest.fn().mockReturnValue({
+              single: jest.fn().mockResolvedValue({
+                data: { id: existingSiteId, api_token: existingToken },
+                error: null
+              })
+            })
+          })
+        })
+      })
+
+      const request = new NextRequest('http://localhost:3000/api/sites/register', {
+        method: 'POST',
+        body: JSON.stringify(validRegistrationData)
+      })
+
+      const response = await POST(request)
+
+      expect(mockCreateAuthenticatedResponse).toHaveBeenCalledWith(
+        {
+          site_id: existingSiteId,
+          api_token: existingToken,
+          widget_url: `${process.env.NEXT_PUBLIC_API_URL}/api/widget/script`,
+          success: true,
+          existing: true
+        },
+        200,
+        expect.any(Object),
+        '*',
+        request
+      )
+    })
+
+    it('should reject update with invalid token', async () => {
+      const existingSiteId = 'site_existing123'
+      const existingToken = 'token_existing456'
+      const wrongToken = 'token_wrong789'
+      const updateData = {
+        ...validRegistrationData,
+        site_id: existingSiteId
+      }
+
+      mockValidateRequest.mockReturnValue({
+        success: true,
+        data: validRegistrationData
+      })
+
+      // Mock existing site lookup
+      mockSupabaseAdmin.from.mockReturnValueOnce({
+        select: jest.fn().mockReturnValue({
+          eq: jest.fn().mockReturnValue({
+            is: jest.fn().mockReturnValue({
+              single: jest.fn().mockResolvedValue({
+                data: { id: existingSiteId, api_token: existingToken },
+                error: null
+              })
+            })
+          })
+        })
+      })
+
+      const request = new NextRequest('http://localhost:3000/api/sites/register', {
+        method: 'POST',
+        headers: {
+          authorization: `Bearer ${wrongToken}`
+        },
+        body: JSON.stringify(updateData)
+      })
+
+      const response = await POST(request)
+
+      expect(mockCreateAuthenticatedResponse).toHaveBeenCalledWith(
+        {
+          error: 'Unauthorized',
+          message: 'Invalid token for this site',
+          code: 1003
+        },
+        401,
+        expect.any(Object),
+        '*',
+        request
+      )
+    })
+
+    it('should create new site if provided site_id does not exist', async () => {
+      const nonExistentSiteId = 'site_nonexistent'
+      const updateData = {
+        ...validRegistrationData,
+        site_id: nonExistentSiteId
+      }
+
+      mockValidateRequest.mockReturnValue({
+        success: true,
+        data: validRegistrationData
+      })
+
+      // Mock site lookup - not found
+      mockSupabaseAdmin.from.mockReturnValueOnce({
+        select: jest.fn().mockReturnValue({
+          eq: jest.fn().mockReturnValue({
+            is: jest.fn().mockReturnValue({
+              single: jest.fn().mockResolvedValue({
+                data: null,
+                error: { message: 'Not found' }
+              })
+            })
+          })
+        })
+      })
+
+      // Mock domain check - no existing domain
+      mockSupabaseAdmin.from.mockReturnValueOnce({
+        select: jest.fn().mockReturnValue({
+          eq: jest.fn().mockReturnValue({
+            is: jest.fn().mockReturnValue({
+              single: jest.fn().mockResolvedValue({
+                data: null,
+                error: { message: 'Not found' }
+              })
+            })
+          })
+        })
+      })
+
+      // Mock new site creation
+      mockSupabaseAdmin.from.mockReturnValueOnce({
+        insert: jest.fn().mockReturnValue({
+          select: jest.fn().mockReturnValue({
+            single: jest.fn().mockResolvedValue({
+              data: { id: 'site_new123', ...validRegistrationData },
+              error: null
+            })
+          })
+        })
+      })
+
+      const request = new NextRequest('http://localhost:3000/api/sites/register', {
+        method: 'POST',
+        body: JSON.stringify(updateData)
+      })
+
+      const response = await POST(request)
+
+      expect(mockCreateAuthenticatedResponse).toHaveBeenCalledWith(
+        expect.objectContaining({
+          success: true,
+          created: true
+        }),
+        201,
+        expect.any(Object),
+        '*',
+        request
+      )
+    })
   })
 
   describe('GET /api/sites/register', () => {

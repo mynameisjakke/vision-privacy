@@ -2,6 +2,39 @@
 
 All notable changes to the Vision Privacy WordPress plugin will be documented in this file.
 
+## [1.0.5] - 2025-11-13
+
+### Added
+- **Smart Registration System**: Plugin now checks if site is already registered before creating new registration
+- **Registration Verification**: New `verify_existing_registration()` method validates existing site_id with API
+- **Automatic Updates**: Widget URL automatically updates when verification detects changes
+
+### Changed
+- **Prevent Duplicates**: Registration now reuses existing site_id instead of creating duplicate entries
+- **Update Instead of Create**: Registration endpoint now includes site_id and auth token for updates
+- **Improved Flow**: Better registration logic prevents multiple registrations of the same site
+
+### Fixed
+- **Duplicate Prevention**: Fixed issue where clicking "Register Site" multiple times created duplicate registrations
+- **Data Continuity**: Maintains consistent site_id across re-registrations, preserving historical data
+- **Lost Connections**: Prevents loss of connection to previous site data and analytics
+
+### Technical Details
+- Registration checks for existing site_id before making API call
+- Verification endpoint validates registration status (200 = valid, 404 = not found, 401 = unauthorized)
+- Includes Authorization header with existing token for update operations
+- Gracefully handles invalid/expired registrations by creating new ones
+
+## [1.0.4] - 2025-11-13
+
+### Added
+- **Clear Error Button**: Added button to clear old error messages from admin interface
+- **Better UX**: Users can now easily clear stale error messages without database access
+
+### Improved
+- **Error Handling**: Better handling of stale error messages
+- **Admin Interface**: Cleaner error display with clear action button
+
 ## [1.0.3] - 2025-11-13
 
 ### Fixed

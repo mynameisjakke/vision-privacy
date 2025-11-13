@@ -238,7 +238,12 @@ $countries = array(
                 <?php if (!empty($last_error)): ?>
                 <tr>
                     <th scope="row">Senaste fel</th>
-                    <td class="error-message"><?php echo esc_html($last_error); ?></td>
+                    <td>
+                        <div class="error-message"><?php echo esc_html($last_error); ?></div>
+                        <button type="button" id="clear-error" class="button button-small" style="margin-top: 5px;">
+                            Rensa felmeddelande
+                        </button>
+                    </td>
                 </tr>
                 <?php endif; ?>
             </table>
@@ -736,6 +741,37 @@ jQuery(document).ready(function($) {
             },
             error: function() {
                 showMessage('Registrering misslyckades', 'error');
+            },
+            complete: function() {
+                button.prop('disabled', false).text(originalText);
+            }
+        });
+    });
+    
+    // Clear error button
+    $('#clear-error').on('click', function() {
+        var button = $(this);
+        var originalText = button.text();
+        button.prop('disabled', true).text('Rensar...');
+        
+        $.ajax({
+            url: ajaxurl,
+            type: 'POST',
+            data: {
+                action: 'vision_privacy_clear_error',
+                nonce: '<?php echo wp_create_nonce('vision_privacy_admin'); ?>'
+            },
+            success: function(response) {
+                showMessage(response.message, response.success ? 'success' : 'error');
+                if (response.success) {
+                    // Reload page after clearing error
+                    setTimeout(function() {
+                        location.reload();
+                    }, 1000);
+                }
+            },
+            error: function() {
+                showMessage('Kunde inte rensa felmeddelande', 'error');
             },
             complete: function() {
                 button.prop('disabled', false).text(originalText);
