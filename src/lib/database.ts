@@ -484,6 +484,21 @@ export class PolicyTemplatesDB {
     return data
   }
 
+  static async update(id: string, updateData: Partial<Omit<PolicyTemplate, 'id' | 'created_at'>>): Promise<PolicyTemplate | null> {
+    const { data, error } = await supabase
+      .from(TABLES.POLICY_TEMPLATES)
+      .update({ ...updateData, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .single()
+    
+    if (error) {
+      const { error: errorMsg } = handleSupabaseError(error)
+      throw new Error(`Failed to update template: ${errorMsg}`)
+    }
+    return data
+  }
+
   static async list(templateType?: string): Promise<PolicyTemplate[]> {
     let query = supabase.from(TABLES.POLICY_TEMPLATES).select('*')
     
