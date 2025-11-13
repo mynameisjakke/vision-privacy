@@ -516,6 +516,19 @@ export class PolicyTemplatesDB {
     }
     return data || []
   }
+
+  static async delete(id: string): Promise<boolean> {
+    const { error } = await supabase
+      .from(TABLES.POLICY_TEMPLATES)
+      .delete()
+      .eq('id', id)
+    
+    if (error) {
+      const { error: errorMsg } = handleSupabaseError(error)
+      throw new Error(`Failed to delete template: ${errorMsg}`)
+    }
+    return true
+  }
 }
 
 /**
