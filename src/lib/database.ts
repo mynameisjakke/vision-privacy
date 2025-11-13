@@ -424,6 +424,20 @@ export class PolicyTemplatesDB {
     return data
   }
 
+  static async findById(id: string): Promise<PolicyTemplate | null> {
+    const { data, error } = await supabase
+      .from(TABLES.POLICY_TEMPLATES)
+      .select('*')
+      .eq('id', id)
+      .single()
+    
+    if (error && error.code !== 'PGRST116') {
+      const { error: errorMsg } = handleSupabaseError(error)
+      throw new Error(`Failed to find template by ID: ${errorMsg}`)
+    }
+    return data
+  }
+
   static async findActive(templateType: 'banner' | 'policy' | 'cookie_notice'): Promise<PolicyTemplate | null> {
     const { data, error } = await supabase
       .from(TABLES.POLICY_TEMPLATES)
