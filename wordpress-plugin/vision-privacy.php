@@ -26,7 +26,7 @@ define('VISION_PRIVACY_VERSION', '1.0.0');
 define('VISION_PRIVACY_PLUGIN_FILE', __FILE__);
 define('VISION_PRIVACY_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('VISION_PRIVACY_PLUGIN_URL', plugin_dir_url(__FILE__));
-define('VISION_PRIVACY_API_ENDPOINT', 'https://vision-privacy-api.vercel.app');
+define('VISION_PRIVACY_API_ENDPOINT', 'https://vision-privacy.vercel.app');
 
 /**
  * Main Vision Privacy Plugin Class
