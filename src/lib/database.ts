@@ -161,6 +161,20 @@ export class SitesDB {
       throw new Error(`Failed to delete site: ${errorMsg}`)
     }
   }
+
+  static async getAllActiveSites(): Promise<Site[]> {
+    const { data, error } = await supabase
+      .from(TABLES.SITES)
+      .select('*')
+      .eq('status', 'active')
+      .order('created_at', { ascending: false })
+    
+    if (error) {
+      const { error: errorMsg } = handleSupabaseError(error)
+      throw new Error(`Failed to get active sites: ${errorMsg}`)
+    }
+    return data || []
+  }
 }
 
 /**
@@ -287,6 +301,95 @@ export class ConsentRecordsDB {
     }
     return data?.length || 0
   }
+
+  static async countByDateRange(siteId: string | null, startDate: Date, endDate: Date): Promise<number> {
+    let query = supabase
+      .from(TABLES.CONSENT_RECORDS)
+      .select('*', { count: 'exact', head: true })
+      .gte('consent_timestamp', startDate.toISOString())
+      .lte('consent_timestamp', endDate.toISOString())
+    
+    if (siteId) {
+      query = query.eq('site_id', siteId)
+    }
+    
+    const { count, error } = await query
+    
+    if (error) {
+      const { error: errorMsg } = handleSupabaseError(error)
+      throw new Error(`Failed to count consents by date range: ${errorMsg}`)
+    }
+    return count || 0
+  }
+
+  static async countByCategory(siteId: string | null, startDate: Date, endDate: Date): Promise<Record<string, number>> {
+    let query = supabase
+      .from(TABLES.CONSENT_RECORDS)
+      .select('consent_categories')
+      .gte('consent_timestamp', startDate.toISOString())
+      .lte('consent_timestamp', endDate.toISOString())
+    
+    if (siteId) {
+      query = query.eq('site_id', siteId)
+    }
+    
+    const { data, error } = await query
+    
+    if (error) {
+      const { error: errorMsg } = handleSupabaseError(error)
+      throw new Error(`Failed to count consents by category: ${errorMsg}`)
+    }
+    
+    const categoryCounts: Record<string, number> = {}
+    data?.forEach(record => {
+      if (record.consent_categories && Array.isArray(record.consent_categories)) {
+        record.consent_categories.forEach((category: string) => {
+          categoryCounts[category] = (categoryCounts[category] || 0) + 1
+        })
+      }
+    })
+    
+    return categoryCounts
+  }
+
+  static async countBySite(startDate: Date, endDate: Date): Promise<Record<string, number>> {
+    const { data, error } = await supabase
+      .from(TABLES.CONSENT_RECORDS)
+      .select('site_id')
+      .gte('consent_timestamp', startDate.toISOString())
+      .lte('consent_timestamp', endDate.toISOString())
+    
+    if (error) {
+      const { error: errorMsg } = handleSupabaseError(error)
+      throw new Error(`Failed to count consents by site: ${errorMsg}`)
+    }
+    
+    const siteCounts: Record<string, number> = {}
+    data?.forEach(record => {
+      siteCounts[record.site_id] = (siteCounts[record.site_id] || 0) + 1
+    })
+    
+    return siteCounts
+  }
+
+  static async countExpired(siteId: string | null): Promise<number> {
+    let query = supabase
+      .from(TABLES.CONSENT_RECORDS)
+      .select('*', { count: 'exact', head: true })
+      .lt('expires_at', new Date().toISOString())
+    
+    if (siteId) {
+      query = query.eq('site_id', siteId)
+    }
+    
+    const { count, error } = await query
+    
+    if (error) {
+      const { error: errorMsg } = handleSupabaseError(error)
+      throw new Error(`Failed to count expired consents: ${errorMsg}`)
+    }
+    return count || 0
+  }
 }
 
 /**
@@ -317,21 +420,6 @@ export class ClientScansDB {
     if (error && error.code !== 'PGRST116') {
       const { error: errorMsg } = handleSupabaseError(error)
       throw new Error(`Failed to find client scan: ${errorMsg}`)
-    }
-    return data
-  }
-
-  static async markProcessed(id: string): Promise<ClientScan> {
-    const { data, error } = await supabase
-      .from(TABLES.CLIENT_SCANS)
-      .update({ processed: true })
-      .eq('id', id)
-      .select()
-      .single()
-    
-    if (error) {
-      const { error: errorMsg } = handleSupabaseError(error)
-      throw new Error(`Failed to mark scan as processed: ${errorMsg}`)
     }
     return data
   }
@@ -529,6 +617,20 @@ export class PolicyTemplatesDB {
     }
     return true
   }
+
+  static async getVersionHistory(templateType: string): Promise<PolicyTemplate[]> {
+    const { data, error } = await supabase
+      .from(TABLES.POLICY_TEMPLATES)
+      .select('*')
+      .eq('template_type', templateType)
+      .order('created_at', { ascending: false })
+    
+    if (error) {
+      const { error: errorMsg } = handleSupabaseError(error)
+      throw new Error(`Failed to get version history: ${errorMsg}`)
+    }
+    return data || []
+  }
 }
 
 /**
@@ -577,6 +679,18 @@ export class CookieCategoriesDB {
     }
     return data
   }
+
+  static async deactivateAll(): Promise<void> {
+    const { error } = await supabase
+      .from(TABLES.COOKIE_CATEGORIES)
+      .update({ is_active: false, updated_at: new Date().toISOString() })
+      .eq('is_active', true)
+    
+    if (error) {
+      const { error: errorMsg } = handleSupabaseError(error)
+      throw new Error(`Failed to deactivate cookie categories: ${errorMsg}`)
+    }
+  }
 }
 
 /**
@@ -607,6 +721,34 @@ export class SitePoliciesDB {
     if (error && error.code !== 'PGRST116') {
       const { error: errorMsg } = handleSupabaseError(error)
       throw new Error(`Failed to find site policy: ${errorMsg}`)
+    }
+    return data
+  }
+
+  static async countByTemplateVersion(version: string): Promise<number> {
+    const { count, error } = await supabase
+      .from(TABLES.SITE_POLICIES)
+      .select('*', { count: 'exact', head: true })
+      .eq('template_version', version)
+    
+    if (error) {
+      const { error: errorMsg } = handleSupabaseError(error)
+      throw new Error(`Failed to count sites by template version: ${errorMsg}`)
+    }
+    return count || 0
+  }
+
+  static async updateTemplateVersion(siteId: string, version: string): Promise<SitePolicy> {
+    const { data, error } = await supabase
+      .from(TABLES.SITE_POLICIES)
+      .update({ template_version: version })
+      .eq('site_id', siteId)
+      .select()
+      .single()
+    
+    if (error) {
+      const { error: errorMsg } = handleSupabaseError(error)
+      throw new Error(`Failed to update template version: ${errorMsg}`)
     }
     return data
   }

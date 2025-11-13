@@ -8,7 +8,7 @@ import {
 } from '@/utils/response'
 import { validateRequest, templateUpdateSchema, paginationSchema } from '@/lib/validation'
 import { validateAdminToken } from '@/utils/auth'
-import { PolicyTemplatesDB, CookieCategoriesDB, SitePoliciesDB } from '@/lib/database'
+import { PolicyTemplatesDB, CookieCategoriesDB, SitePoliciesDB, SitesDB } from '@/lib/database'
 import { withAuthMiddleware, InputSanitizer, createAuthenticatedResponse } from '@/lib/auth-middleware'
 
 /**
@@ -245,7 +245,7 @@ export async function POST(request: NextRequest) {
 async function applyTemplatesToAllSites(version: string): Promise<number> {
   try {
     // Get all active sites
-    const sites = await PolicyTemplatesDB.getAllActiveSites()
+    const sites = await SitesDB.getAllActiveSites()
     let updatedCount = 0
 
     for (const site of sites) {

@@ -8,7 +8,7 @@ import {
   createAuthErrorResponse 
 } from '@/utils/response'
 import { validateAdminToken } from '@/utils/auth'
-import { PolicyTemplatesDB, SitePoliciesDB } from '@/lib/database'
+import { PolicyTemplatesDB, SitePoliciesDB, SitesDB } from '@/lib/database'
 
 /**
  * GET /api/admin/templates/[template_id] - Get specific template
@@ -279,7 +279,7 @@ async function getTemplateUsageCount(templateId: string): Promise<number> {
 async function applyTemplateToAllSites(template: any): Promise<number> {
   try {
     // Get all active sites
-    const sites = await PolicyTemplatesDB.getAllActiveSites()
+    const sites = await SitesDB.getAllActiveSites()
     let updatedCount = 0
 
     for (const site of sites) {

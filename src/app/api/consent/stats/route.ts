@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server'
 import { createSuccessResponse, createValidationErrorResponse, createMethodNotAllowedResponse, createDatabaseErrorResponse } from '@/utils/response'
-import { validateApiToken } from '@/utils/auth'
+import { validateApiToken, extractApiToken } from '@/utils/auth'
 import { ConsentRecordsDB } from '@/lib/database'
 
 interface ConsentStats {
@@ -15,9 +15,14 @@ interface ConsentStats {
 export async function GET(request: NextRequest) {
   try {
     // Validate API token for admin access
-    const authResult = await validateApiToken(request)
+    const token = extractApiToken(request)
+    if (!token) {
+      return createValidationErrorResponse('Missing API token')
+    }
+    
+    const authResult = await validateApiToken(token)
     if (!authResult.valid) {
-      return createValidationErrorResponse('Invalid or missing API token')
+      return createValidationErrorResponse('Invalid API token')
     }
     
     const { searchParams } = new URL(request.url)
