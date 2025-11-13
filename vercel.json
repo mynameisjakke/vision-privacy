@@ -1,6 +1,7 @@
 {
   "buildCommand": "npm run build",
   "framework": "nextjs",
+  "regions": ["arn1"],
   "functions": {
     "src/app/api/**/*.ts": {
       "maxDuration": 30,
