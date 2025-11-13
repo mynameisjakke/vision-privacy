@@ -85,7 +85,7 @@ export class PolicyTemplateEngine {
   /**
    * Get active template from cache or database
    */
-  static async getActiveTemplate(templateType: string): Promise<any> {
+  static async getActiveTemplate(templateType: 'banner' | 'policy' | 'cookie_notice'): Promise<any> {
     const cacheKey = `active:${templateType}`
     const cached = this.templateCache.get(cacheKey)
 
