@@ -121,7 +121,7 @@ class APITester {
 
     try {
       const response = await fetch(`${API_BASE}/api/policy/${this.siteId}`)
-      const isHTML = response.headers.get('content-type')?.includes('text/html')
+      const isHTML = response.headers.get('content-type')?.includes('text/html') || false
 
       this.addResult('Privacy Policy', response.ok && isHTML, 
         response.ok ? undefined : 'Policy generation failed')
