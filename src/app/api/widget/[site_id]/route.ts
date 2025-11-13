@@ -31,7 +31,7 @@ export async function GET(
   request: NextRequest,
   { params }: { params: { site_id: string } }
 ): Promise<Response> {
-  return await withPerformanceMonitoring(`widget:${params.site_id}`, async () => {
+  const handler = withPerformanceMonitoring(`widget:${params.site_id}`, async () => {
     const startTime = performance.now()
     
     // Apply authentication middleware
@@ -124,6 +124,8 @@ export async function GET(
       )
     }
   })
+  
+  return handler()
 }
 
 async function generateWidgetConfig(siteId: string): Promise<WidgetConfigResponse | null> {
