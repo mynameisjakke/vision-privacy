@@ -7,6 +7,10 @@ import { Logger } from '@/lib/logger'
 import { Analytics } from '@/lib/analytics'
 import { AlertManager } from '@/lib/alerting'
 
+// Force dynamic rendering for health checks
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 export async function GET(request: NextRequest) {
   try {
     // Perform comprehensive health check
