@@ -110,7 +110,7 @@ export default function DemoPage() {
     } catch (error) {
       console.error('Failed to submit consent:', error)
     }
-  })
+  }, [])
 
   const showCustomizeModal = useCallback((siteId: string, categories: any[]) => {
     // Read saved consent from localStorage
