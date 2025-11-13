@@ -7,7 +7,6 @@
       "memory": 1024
     }
   },
-  "regions": ["iad1", "fra1", "syd1"],
   "headers": [
     {
       "source": "/api/widget/script",
