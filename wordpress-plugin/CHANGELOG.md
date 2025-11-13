@@ -2,6 +2,17 @@
 
 All notable changes to the Vision Privacy WordPress plugin will be documented in this file.
 
+## [1.0.3] - 2025-11-13
+
+### Fixed
+- **HTTP Status Codes**: Now accepts both HTTP 200 and 201 as successful registration
+- **False Error Messages**: Fixed issue where successful registration (HTTP 201) was shown as error
+
+### Technical Details
+- Registration endpoint returns HTTP 201 (Created) on success
+- Plugin now correctly handles both 200 and 201 status codes
+- Prevents "Registration failed" error on successful registration
+
 ## [1.0.2] - 2025-11-13
 
 ### Fixed

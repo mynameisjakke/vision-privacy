@@ -3,7 +3,7 @@
  * Plugin Name: Vision Privacy
  * Plugin URI: https://visionmedia.se
  * Description: Centralized privacy and cookie policy management for GDPR/IMY compliance
- * Version: 1.0.2
+ * Version: 1.0.3
  * Author: Jakob Bourhil @ Vision Media
  * Author URI: https://visionmedia.io
  * License: GPL v2 or later
@@ -22,7 +22,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('VISION_PRIVACY_VERSION', '1.0.2');
+define('VISION_PRIVACY_VERSION', '1.0.3');
 define('VISION_PRIVACY_PLUGIN_FILE', __FILE__);
 define('VISION_PRIVACY_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('VISION_PRIVACY_PLUGIN_URL', plugin_dir_url(__FILE__));
@@ -175,7 +175,8 @@ class VisionPrivacyPlugin {
             $response_code = wp_remote_retrieve_response_code($response);
             $response_body = wp_remote_retrieve_body($response);
             
-            if ($response_code !== 200) {
+            // Accept both 200 (OK) and 201 (Created) as success
+            if ($response_code !== 200 && $response_code !== 201) {
                 throw new Exception('API Error: HTTP ' . $response_code . ' - ' . $response_body);
             }
             
