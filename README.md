@@ -2,12 +2,39 @@
 
 Centralized privacy and cookie policy management for 700+ WordPress sites. This system provides GDPR/IMY-compliant cookie consent management through a scalable SaaS platform.
 
+**Current Version**: 1.0.5  
+**Status**: ✅ Production Ready  
+**Live API**: https://vision-privacy.vercel.app
+
+## Quick Start
+
+### For WordPress Users
+1. Download the latest plugin: [`vision-privacy-1.0.5.zip`](./vision-privacy-1.0.5.zip)
+2. Install in WordPress: Plugins → Add New → Upload Plugin
+3. Activate and the plugin will automatically register your site
+4. Widget loads automatically on your site
+
+### For Developers
+```bash
+# Clone and install
+git clone https://github.com/mynameisjakke/vision-privacy.git
+cd vision-privacy
+npm install
+
+# Set up environment
+cp .env.example .env.local
+# Add your Supabase credentials
+
+# Run locally
+npm run dev
+```
+
 ## Architecture
 
 - **Backend API**: Next.js serverless functions hosted on Vercel
 - **Database**: Supabase PostgreSQL with real-time capabilities  
 - **JavaScript Widget**: Lightweight client-side consent management
-- **WordPress Plugin**: PHP plugin for site registration and widget injection
+- **WordPress Plugin**: PHP plugin (v1.0.5) with smart registration system
 
 ## Getting Started
 
@@ -41,15 +68,19 @@ Centralized privacy and cookie policy management for 700+ WordPress sites. This 
 
 ### API Endpoints
 
+#### Core Endpoints
 - `GET /api/health` - Health check endpoint
-- `POST /api/sites/register` - Register a new WordPress site
-- `GET /api/widget/{site_id}` - Get widget configuration
+- `POST /api/sites/register` - Register or update WordPress site (smart registration)
+- `GET /api/sites/verify/{siteId}` - Verify existing site registration ✨ NEW in v1.0.5
+- `GET /api/widget/script` - Get widget script
 - `POST /api/consent` - Store visitor consent
 - `POST /api/scan` - Report client-side scan results
+
+#### Policy Endpoints
 - `GET /api/policy/{site_id}/{policy_type}` - Get rendered policy content
 - `GET /api/demo-policy/{policy_type}` - Get demo policy content
 
-For detailed API documentation, see [API_DOCUMENTATION.md](./API_DOCUMENTATION.md).
+For detailed API documentation, see [docs/api/API_DOCUMENTATION.md](./docs/api/API_DOCUMENTATION.md).
 
 ### Environment Variables
 
@@ -71,10 +102,7 @@ vercel --prod
 
 Make sure to configure environment variables in your Vercel dashboard.
 
-For detailed deployment instructions, see:
-- [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md) - Complete deployment guide
-- [DEPLOYMENT_CHECKLIST.md](./DEPLOYMENT_CHECKLIST.md) - Deployment checklist
-- [DEPLOYMENT_COMMANDS.md](./DEPLOYMENT_COMMANDS.md) - Quick command reference
+For detailed deployment instructions, see [docs/deployment/](./docs/deployment/).
 
 ## Project Structure
 
@@ -106,14 +134,30 @@ This implementation addresses the following requirements:
 
 ## Documentation
 
-- [API Documentation](./API_DOCUMENTATION.md) - Complete API reference
-- [Deployment Guide](./DEPLOYMENT_GUIDE.md) - Step-by-step deployment instructions
-- [Deployment Checklist](./DEPLOYMENT_CHECKLIST.md) - Deployment tracking checklist
-- [Deployment Commands](./DEPLOYMENT_COMMANDS.md) - Quick command reference
-- [Testing Guide](./TESTING-GUIDE.md) - Testing procedures
-- [Manual Testing Guide](./.kiro/specs/policy-system-implementation/MANUAL_TESTING_GUIDE.md) - Policy system manual tests
+### API Documentation
+- [API Reference](./docs/api/API_DOCUMENTATION.md) - Complete API reference
+- [API Testing Guide](./docs/api/TEST_API_ENDPOINTS.md) - Testing endpoints
+
+### Deployment
+- [Deployment Guides](./docs/deployment/) - Deployment instructions and checklists
+- [Latest Deployment](./docs/deployment/DEPLOYMENT_SUCCESS.md) - v1.0.5 deployment status
+
+### WordPress Plugin
+- [Plugin Documentation](./wordpress-plugin/README.md) - WordPress plugin guide
+- [Plugin Changelog](./wordpress-plugin/CHANGELOG.md) - Version history
+- [Installation Guide](./wordpress-plugin/INSTALL.md) - Installation instructions
+
+### Development
+- [Testing Guide](./docs/TESTING-GUIDE.md) - Testing procedures
+- [Architecture Docs](./docs/) - Additional documentation
 
 ## Features
+
+### Smart Registration System (v1.0.5) ✨
+- **Duplicate Prevention**: Automatically detects and prevents duplicate site registrations
+- **Site Verification**: Validates existing registrations before creating new ones
+- **Data Continuity**: Maintains consistent site_id across plugin reinstalls
+- **Update Support**: Updates existing sites instead of creating duplicates
 
 ### Policy System
 - Dynamic policy rendering with site-specific data
@@ -130,7 +174,7 @@ This implementation addresses the following requirements:
 - Granular consent categories (Essential, Functional, Analytics, Advertising)
 - Consent storage and tracking
 - Cookie scanning and detection
-- WordPress plugin integration
+- WordPress plugin integration (v1.0.5)
 
 ## License
 

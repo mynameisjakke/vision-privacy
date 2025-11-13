@@ -9,7 +9,7 @@ echo ""
 # Set variables
 PLUGIN_DIR="wordpress-plugin"
 PLUGIN_NAME="vision-privacy"
-VERSION="1.0.3"
+VERSION="1.0.4"
 OUTPUT_FILE="${PLUGIN_NAME}-v${VERSION}.zip"
 
 # Check if plugin directory exists
