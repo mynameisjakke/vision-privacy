@@ -209,6 +209,7 @@ function generateBannerHtml(template: string, site: any): string {
 
 function getDefaultBannerTemplate(): string {
   return `
+    <div id="vp-widget-container">
     <div id="vp-cookie-banner" class="vp-banner">
       <div class="vp-banner-container">
         <div class="vp-banner-icon">
@@ -276,6 +277,7 @@ function getDefaultBannerTemplate(): string {
           </div>
         </div>
       </div>
+    </div>
     </div>
   `
 }
