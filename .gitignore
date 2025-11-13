@@ -17,6 +17,10 @@ dist/
 .env.test.local
 .env.production.local
 
+# Secret files
+*secrets*.txt
+*credentials*.txt
+
 # Vercel
 .vercel
 

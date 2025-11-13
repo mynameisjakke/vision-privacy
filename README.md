@@ -46,6 +46,10 @@ Centralized privacy and cookie policy management for 700+ WordPress sites. This 
 - `GET /api/widget/{site_id}` - Get widget configuration
 - `POST /api/consent` - Store visitor consent
 - `POST /api/scan` - Report client-side scan results
+- `GET /api/policy/{site_id}/{policy_type}` - Get rendered policy content
+- `GET /api/demo-policy/{policy_type}` - Get demo policy content
+
+For detailed API documentation, see [API_DOCUMENTATION.md](./API_DOCUMENTATION.md).
 
 ### Environment Variables
 
@@ -66,6 +70,11 @@ vercel --prod
 ```
 
 Make sure to configure environment variables in your Vercel dashboard.
+
+For detailed deployment instructions, see:
+- [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md) - Complete deployment guide
+- [DEPLOYMENT_CHECKLIST.md](./DEPLOYMENT_CHECKLIST.md) - Deployment checklist
+- [DEPLOYMENT_COMMANDS.md](./DEPLOYMENT_COMMANDS.md) - Quick command reference
 
 ## Project Structure
 
@@ -95,12 +104,33 @@ This implementation addresses the following requirements:
 - **6.2**: Lightweight widget (< 50KB) with async loading
 - **6.3**: Supabase database with appropriate indexes for fast lookups
 
-## Next Steps
+## Documentation
 
-1. Set up Supabase database schema (Task 2.1)
-2. Implement remaining API endpoints (Tasks 3.1-3.3)
-3. Build JavaScript widget (Task 5)
-4. Create WordPress plugin (Task 6)
+- [API Documentation](./API_DOCUMENTATION.md) - Complete API reference
+- [Deployment Guide](./DEPLOYMENT_GUIDE.md) - Step-by-step deployment instructions
+- [Deployment Checklist](./DEPLOYMENT_CHECKLIST.md) - Deployment tracking checklist
+- [Deployment Commands](./DEPLOYMENT_COMMANDS.md) - Quick command reference
+- [Testing Guide](./TESTING-GUIDE.md) - Testing procedures
+- [Manual Testing Guide](./.kiro/specs/policy-system-implementation/MANUAL_TESTING_GUIDE.md) - Policy system manual tests
+
+## Features
+
+### Policy System
+- Dynamic policy rendering with site-specific data
+- Cookie Policy and Privacy Policy support
+- Template variable replacement
+- Multi-layer caching for performance
+- Demo environment for testing
+- Cross-policy navigation
+- Accessibility compliant (WCAG AA)
+- Mobile responsive design
+
+### Cookie Consent Management
+- GDPR/IMY compliant cookie banner
+- Granular consent categories (Essential, Functional, Analytics, Advertising)
+- Consent storage and tracking
+- Cookie scanning and detection
+- WordPress plugin integration
 
 ## License
 

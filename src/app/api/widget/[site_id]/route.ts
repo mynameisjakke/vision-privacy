@@ -208,20 +208,21 @@ function generateBannerHtml(template: string, site: any): string {
 function getDefaultBannerTemplate(): string {
   return `
     <div id="vp-cookie-banner" class="vp-banner">
-      <div class="vp-banner-content">
+      <div class="vp-banner-container">
+        <div class="vp-banner-icon">
+          🍪
+        </div>
         <div class="vp-banner-text">
-          <h3>We value your privacy</h3>
-          <p>We use cookies to enhance your browsing experience, serve personalized ads or content, and analyze our traffic. By clicking "Accept All", you consent to our use of cookies.</p>
+          <p>By clicking "Accept", you agree to the storing of cookies on your device. <button class="vp-policy-link" data-policy="privacy" type="button">Privacy Policy</button> • <button class="vp-policy-link" data-policy="cookie" type="button">Cookie Policy</button></p>
         </div>
         <div class="vp-banner-actions">
-          <button id="vp-accept-all" class="vp-btn vp-btn-primary">Accept All</button>
-          <button id="vp-reject-all" class="vp-btn vp-btn-secondary">Reject All</button>
-          <button id="vp-settings" class="vp-btn vp-btn-link">Cookie Settings</button>
-        </div>
-        <div class="vp-banner-links">
-          <button class="vp-policy-link" data-policy="privacy" type="button">Privacy Policy</button>
-          <span class="vp-separator">•</span>
-          <button class="vp-policy-link" data-policy="cookie" type="button">Cookie Policy</button>
+          <button id="vp-settings" class="vp-btn vp-btn-icon" aria-label="Cookie Settings" title="Cookie Settings">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M17.43 10.98C17.47 10.66 17.5 10.34 17.5 10C17.5 9.66 17.47 9.34 17.43 9.02L19.54 7.37C19.73 7.22 19.78 6.95 19.66 6.73L17.66 3.27C17.54 3.05 17.27 2.97 17.05 3.05L14.56 4.05C14.04 3.65 13.48 3.32 12.87 3.07L12.49 0.42C12.46 0.18 12.25 0 12 0H8C7.75 0 7.54 0.18 7.51 0.42L7.13 3.07C6.52 3.32 5.96 3.66 5.44 4.05L2.95 3.05C2.72 2.96 2.46 3.05 2.34 3.27L0.34 6.73C0.21 6.95 0.27 7.22 0.46 7.37L2.57 9.02C2.53 9.34 2.5 9.67 2.5 10C2.5 10.33 2.53 10.66 2.57 10.98L0.46 12.63C0.27 12.78 0.22 13.05 0.34 13.27L2.34 16.73C2.46 16.95 2.73 17.03 2.95 16.95L5.44 15.95C5.96 16.35 6.52 16.68 7.13 16.93L7.51 19.58C7.54 19.82 7.75 20 8 20H12C12.25 20 12.46 19.82 12.49 19.58L12.87 16.93C13.48 16.68 14.04 16.34 14.56 15.95L17.05 16.95C17.28 17.04 17.54 16.95 17.66 16.73L19.66 13.27C19.78 13.05 19.73 12.78 19.54 12.63L17.43 10.98ZM10 13.5C8.07 13.5 6.5 11.93 6.5 10C6.5 8.07 8.07 6.5 10 6.5C11.93 6.5 13.5 8.07 13.5 10C13.5 11.93 11.93 13.5 10 13.5Z" fill="currentColor"/>
+            </svg>
+          </button>
+          <button id="vp-reject-all" class="vp-btn vp-btn-secondary">Reject</button>
+          <button id="vp-accept-all" class="vp-btn vp-btn-primary">Accept</button>
         </div>
       </div>
     </div>
@@ -236,27 +237,40 @@ function getDefaultBannerTemplate(): string {
           <div id="vp-cookie-categories"></div>
         </div>
         <div class="vp-modal-footer">
-          <button id="vp-save-settings" class="vp-btn vp-btn-primary">Save Settings</button>
-          <button id="vp-cancel-settings" class="vp-btn vp-btn-secondary">Cancel</button>
+          <div class="vp-modal-footer-actions">
+            <button id="vp-save-settings" class="vp-btn vp-btn-primary">Save Settings</button>
+            <button id="vp-cancel-settings" class="vp-btn vp-btn-secondary">Cancel</button>
+          </div>
+          <div class="vp-modal-footer-links">
+            <button class="vp-policy-link" data-policy="privacy" type="button">Privacy Policy</button>
+            <span class="vp-separator">•</span>
+            <button class="vp-policy-link" data-policy="cookie" type="button">Cookie Policy</button>
+          </div>
+          <div class="vp-branding">
+            <a href="https://visionmedia.io" target="_blank" rel="noopener noreferrer">Drivs av Vision Media</a>
+          </div>
         </div>
       </div>
     </div>
     
-    <div id="vp-policy-modal" class="vp-modal vp-policy-modal" role="dialog" aria-modal="true" aria-labelledby="vp-policy-title" aria-hidden="true" style="display: none;">
+    <div id="vp-policy-modal" class="vp-modal vp-policy-modal" role="dialog" aria-modal="true" aria-labelledby="vp-policy-title" aria-describedby="vp-policy-content" aria-hidden="true" style="display: none;">
       <div class="vp-modal-backdrop"></div>
-      <div class="vp-modal-content vp-policy-content">
-        <div class="vp-modal-header vp-policy-header">
+      <div class="vp-modal-content">
+        <div class="vp-modal-header">
           <h3 id="vp-policy-title"></h3>
           <button id="vp-close-policy" class="vp-close" aria-label="Close policy">&times;</button>
         </div>
-        <div class="vp-modal-body vp-policy-body">
-          <div id="vp-policy-loading" class="vp-loading">
+        <div class="vp-modal-body">
+          <div id="vp-policy-loading" class="vp-loading" role="status" aria-live="polite">
             <span class="vp-spinner"></span>
             <p>Loading policy...</p>
           </div>
           <div id="vp-policy-content" class="vp-policy-text" style="display: none;"></div>
-          <div id="vp-policy-error" class="vp-error" style="display: none;">
+          <div id="vp-policy-error" class="vp-error" style="display: none;" role="alert" aria-live="assertive">
             <p>Unable to load policy. Please try again later.</p>
+          </div>
+          <div class="vp-branding">
+            <a href="https://visionmedia.io" target="_blank" rel="noopener noreferrer">Drivs av Vision Media</a>
           </div>
         </div>
       </div>
@@ -266,216 +280,465 @@ function getDefaultBannerTemplate(): string {
 
 function generateBannerCss(): string {
   return `
+    /* Banner Container - Floating Design */
     .vp-banner {
       position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      background: #fff;
-      border-top: 1px solid #e0e0e0;
-      box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      max-width: 1200px;
+      width: calc(100% - 48px);
       z-index: 999999;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      font-size: 14px;
-      line-height: 1.4;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      animation: vp-slide-up 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     }
     
-    .vp-banner-content {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 20px;
+    /* Optimized slide-up animation using translate3d for GPU acceleration */
+    @keyframes vp-slide-up {
+      from {
+        opacity: 0;
+        transform: translate3d(-50%, 20px, 0);
+      }
+      to {
+        opacity: 1;
+        transform: translate3d(-50%, 0, 0);
+      }
+    }
+    
+    .vp-banner.vp-banner-hiding {
+      animation: vp-slide-down 0.3s cubic-bezier(0.7, 0, 0.84, 0);
+      animation-fill-mode: forwards;
+    }
+    
+    /* Optimized slide-down animation using translate3d for GPU acceleration */
+    @keyframes vp-slide-down {
+      from {
+        opacity: 1;
+        transform: translate3d(-50%, 0, 0);
+      }
+      to {
+        opacity: 0;
+        transform: translate3d(-50%, 20px, 0);
+      }
+    }
+    
+    .vp-banner-container {
+      background: #ffffff;
+      border-radius: 16px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08);
+      padding: 20px 24px;
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      gap: 20px;
+      gap: 16px;
+      /* GPU acceleration for smooth rendering */
+      will-change: transform;
+      transform: translateZ(0);
+      backface-visibility: hidden;
     }
     
-    .vp-banner-text h3 {
-      margin: 0 0 8px 0;
-      font-size: 16px;
-      font-weight: 600;
-      color: #333;
+    /* Cookie Icon */
+    .vp-banner-icon {
+      flex-shrink: 0;
+      width: 24px;
+      height: 24px;
+      font-size: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: vp-cookie-wiggle 2s ease-in-out infinite;
+    }
+    
+    @keyframes vp-cookie-wiggle {
+      0%, 100% { transform: rotate(0deg); }
+      10%, 30% { transform: rotate(-10deg); }
+      20%, 40% { transform: rotate(10deg); }
+      50%, 60%, 70%, 80%, 90% { transform: rotate(0deg); }
+    }
+    
+    /* Banner Text */
+    .vp-banner-text {
+      flex: 1;
+      min-width: 0;
     }
     
     .vp-banner-text p {
       margin: 0;
-      color: #666;
-    }
-    
-    .vp-banner-actions {
-      display: flex;
-      gap: 12px;
-      flex-shrink: 0;
-    }
-    
-    .vp-btn {
-      padding: 10px 20px;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
       font-size: 14px;
-      font-weight: 500;
-      transition: all 0.2s ease;
-      text-decoration: none;
-      display: inline-block;
-      text-align: center;
-    }
-    
-    .vp-btn-primary {
-      background: #007cba;
-      color: white;
-    }
-    
-    .vp-btn-primary:hover {
-      background: #005a87;
-    }
-    
-    .vp-btn-secondary {
-      background: #f0f0f0;
+      line-height: 1.5;
       color: #333;
     }
     
-    .vp-btn-secondary:hover {
-      background: #e0e0e0;
-    }
-    
-    .vp-btn-link {
-      background: transparent;
-      color: #007cba;
-      text-decoration: underline;
-    }
-    
-    .vp-btn-link:hover {
-      color: #005a87;
-    }
-    
-    .vp-banner-links,
-    .banner-links {
-      margin-top: 15px;
-      padding-top: 15px;
-      border-top: 1px solid #e0e0e0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      font-size: 13px;
-    }
-    
-    .vp-policy-link,
-    .banner-link {
+    /* Policy Links in Text */
+    .vp-policy-link {
       background: none;
       border: none;
-      color: #007cba;
+      color: #666;
       text-decoration: underline;
       cursor: pointer;
       padding: 0;
-      font-size: 13px;
+      font-size: 14px;
       font-family: inherit;
+      line-height: inherit;
+      transition: color 0.2s ease;
     }
     
-    .vp-policy-link:hover,
-    .banner-link:hover {
-      color: #005a87;
+    .vp-policy-link:hover {
+      color: #000;
     }
     
-    .vp-policy-link:focus,
-    .banner-link:focus {
-      outline: 2px solid #007cba;
+    .vp-policy-link:focus {
+      outline: 2px solid #000;
       outline-offset: 2px;
       border-radius: 2px;
     }
     
-    .vp-separator,
-    .separator {
-      color: #999;
-      user-select: none;
+    /* Banner Actions */
+    .vp-banner-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
     }
     
+    /* Button Styles */
+    .vp-btn {
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      font-family: inherit;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      white-space: nowrap;
+    }
+    
+    .vp-btn:focus {
+      outline: 2px solid #000;
+      outline-offset: 2px;
+    }
+    
+    /* Settings Icon Button */
+    .vp-btn-icon {
+      width: 40px;
+      height: 40px;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f5f5f5;
+      color: #666;
+      /* GPU acceleration for rotation animation */
+      will-change: transform;
+      transform: translateZ(0);
+    }
+    
+    .vp-btn-icon:hover {
+      background: #e8e8e8;
+      color: #000;
+      transform: rotate3d(0, 0, 1, 45deg) translateZ(0);
+    }
+    
+    .vp-btn-icon:active {
+      transform: rotate3d(0, 0, 1, 45deg) scale(0.95) translateZ(0);
+    }
+    
+    /* Secondary Button (Reject) */
+    .vp-btn-secondary {
+      padding: 10px 20px;
+      background: #ffffff;
+      color: #333;
+      border: 1px solid #e0e0e0;
+    }
+    
+    .vp-btn-secondary:hover {
+      background: #f5f5f5;
+      border-color: #d0d0d0;
+    }
+    
+    .vp-btn-secondary:active {
+      transform: scale(0.98);
+    }
+    
+    /* Primary Button (Accept) */
+    .vp-btn-primary {
+      padding: 10px 24px;
+      background: #000000;
+      color: #ffffff;
+      /* GPU acceleration for button animations */
+      will-change: transform;
+      transform: translateZ(0);
+    }
+    
+    .vp-btn-primary:hover {
+      background: #333333;
+      transform: translate3d(0, -1px, 0);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    
+    .vp-btn-primary:active {
+      transform: translate3d(0, 0, 0);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+    
+    /* Mobile Responsive */
+    @media (max-width: 768px) {
+      .vp-banner {
+        bottom: 16px;
+        width: calc(100% - 32px);
+      }
+      
+      .vp-banner-container {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 16px;
+        gap: 12px;
+      }
+      
+      .vp-banner-icon {
+        display: none;
+      }
+      
+      .vp-banner-text p {
+        font-size: 13px;
+        text-align: center;
+      }
+      
+      .vp-banner-actions {
+        flex-direction: row;
+        justify-content: center;
+        gap: 8px;
+      }
+      
+      .vp-btn-secondary,
+      .vp-btn-primary {
+        flex: 1;
+        padding: 12px 16px;
+      }
+      
+      .vp-btn-icon {
+        width: 36px;
+        height: 36px;
+        flex-shrink: 0;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .vp-banner {
+        bottom: 12px;
+        width: calc(100% - 24px);
+      }
+      
+      .vp-banner-container {
+        padding: 12px;
+      }
+      
+      .vp-banner-text p {
+        font-size: 12px;
+      }
+      
+      .vp-btn-secondary,
+      .vp-btn-primary {
+        font-size: 13px;
+        padding: 10px 12px;
+      }
+    }
+    
+    /* Modal Overlay */
     .vp-modal {
       position: fixed;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(0,0,0,0.5);
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(4px);
       z-index: 1000000;
       display: none;
       align-items: center;
       justify-content: center;
+      animation: vp-fade-in 0.2s ease-out;
+      /* GPU acceleration for modal overlay */
+      will-change: opacity;
+      transform: translateZ(0);
     }
     
+    /* Policy modal needs higher z-index to appear above settings modal */
+    .vp-policy-modal {
+      z-index: 1000001 !important;
+    }
+    
+    /* Optimized fade-in animation using opacity and transform for GPU acceleration */
+    @keyframes vp-fade-in {
+      from { 
+        opacity: 0;
+        transform: translateZ(0);
+      }
+      to { 
+        opacity: 1;
+        transform: translateZ(0);
+      }
+    }
+    
+    /* Modal Content */
     .vp-modal-content {
-      background: white;
-      border-radius: 8px;
+      background: #ffffff;
+      border-radius: 16px;
       max-width: 600px;
-      width: 90%;
-      max-height: 80vh;
-      overflow-y: auto;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+      width: calc(100% - 32px);
+      max-height: 85vh;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      display: flex;
+      flex-direction: column;
+      animation: vp-modal-slide-up 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      /* GPU acceleration for modal content */
+      will-change: transform, opacity;
+      transform: translateZ(0);
+      backface-visibility: hidden;
+      -webkit-font-smoothing: antialiased;
     }
     
+    /* Optimized slide-up animation using transform and opacity for GPU acceleration */
+    @keyframes vp-modal-slide-up {
+      from {
+        opacity: 0;
+        transform: translate3d(0, 20px, 0) scale(0.95);
+      }
+      to {
+        opacity: 1;
+        transform: translate3d(0, 0, 0) scale(1);
+      }
+    }
+    
+    /* Modal Header */
     .vp-modal-header {
-      padding: 20px 20px 0 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid #e0e0e0;
-      margin-bottom: 0;
-      padding-bottom: 15px;
+      padding: 24px 24px 20px 24px;
+      border-bottom: 1px solid #f0f0f0;
+      position: relative;
+      flex-shrink: 0;
     }
     
     .vp-modal-header h3 {
       margin: 0;
-      font-size: 18px;
-      color: #333;
+      font-size: 20px;
+      font-weight: 600;
+      color: #000;
+      text-align: center;
+      padding-right: 30px;
     }
     
+    /* Close Button */
     .vp-close {
+      position: absolute;
+      left: 20px;
+      top: 50%;
+      transform: translateY(-50%);
       background: none;
       border: none;
       font-size: 24px;
       cursor: pointer;
       color: #666;
-      padding: 0;
-      width: 30px;
-      height: 30px;
+      padding: 4px;
+      width: 32px;
+      height: 32px;
       display: flex;
       align-items: center;
       justify-content: center;
-      border-radius: 4px;
+      border-radius: 8px;
+      transition: all 0.2s ease;
     }
     
     .vp-close:hover {
-      background: #f0f0f0;
-      color: #333;
+      background: #f5f5f5;
+      color: #000;
     }
     
+    .vp-close:active {
+      transform: translateY(-50%) scale(0.95);
+    }
+    
+    /* Modal Body */
     .vp-modal-body {
-      padding: 20px;
+      padding: 24px;
+      overflow-y: auto;
+      flex: 1;
     }
     
     .vp-modal-body > p {
       margin: 0 0 20px 0;
       color: #666;
-      line-height: 1.5;
+      line-height: 1.6;
+      font-size: 14px;
     }
     
+    /* Modal Footer */
     .vp-modal-footer {
-      padding: 0 20px 20px 20px;
+      padding: 20px 24px 24px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      border-top: 1px solid #f0f0f0;
+      flex-shrink: 0;
+    }
+    
+    .vp-modal-footer-actions {
       display: flex;
       gap: 12px;
-      justify-content: flex-end;
-      border-top: 1px solid #e0e0e0;
-      margin-top: 20px;
-      padding-top: 15px;
     }
     
+    .vp-modal-footer-actions .vp-btn {
+      flex: 1;
+    }
+    
+    .vp-modal-footer-links {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding-top: 12px;
+      border-top: 1px solid #f5f5f5;
+      font-size: 13px;
+    }
+    
+    /* Branding */
+    .vp-branding {
+      text-align: center;
+      padding-top: 16px;
+      margin-top: 16px;
+      border-top: 1px solid #f5f5f5;
+    }
+    
+    .vp-branding a {
+      font-size: 11px;
+      color: #999;
+      text-decoration: none;
+      transition: color 0.2s ease;
+    }
+    
+    .vp-branding a:hover {
+      color: #666;
+    }
+    
+    .vp-branding a:focus {
+      outline: 2px solid #000;
+      outline-offset: 2px;
+      border-radius: 2px;
+    }
+    
+    /* Cookie Categories */
     .vp-category {
-      margin-bottom: 16px;
-      padding: 16px;
-      border: 1px solid #e0e0e0;
-      border-radius: 6px;
-      background: #fafafa;
+      margin-bottom: 12px;
+      padding: 18px;
+      border: 1px solid #e8e8e8;
+      border-radius: 12px;
+      background: #ffffff;
+      transition: all 0.2s ease;
+    }
+    
+    .vp-category:hover {
+      border-color: #d0d0d0;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
     }
     
     .vp-category:last-child {
@@ -485,46 +748,49 @@ function generateBannerCss(): string {
     .vp-category-header {
       display: flex;
       justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: 8px;
+      align-items: center;
+      gap: 16px;
     }
     
     .vp-category-info {
       flex: 1;
-      margin-right: 15px;
+      min-width: 0;
     }
     
     .vp-category-name {
       font-weight: 600;
-      color: #333;
-      margin-bottom: 4px;
+      font-size: 15px;
+      color: #000;
+      margin-bottom: 6px;
       display: flex;
       align-items: center;
       gap: 8px;
     }
     
     .vp-essential-badge {
-      background: #28a745;
-      color: white;
-      font-size: 11px;
-      font-weight: 500;
-      padding: 2px 6px;
-      border-radius: 3px;
+      background: #e8e8e8;
+      color: #666;
+      font-size: 10px;
+      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: 6px;
       text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
     
     .vp-category-description {
       color: #666;
       font-size: 13px;
-      line-height: 1.4;
+      line-height: 1.5;
       margin: 0;
     }
     
+    /* Toggle Switch */
     .vp-toggle {
       position: relative;
       display: inline-block;
-      width: 44px;
-      height: 24px;
+      width: 48px;
+      height: 28px;
       flex-shrink: 0;
     }
     
@@ -532,6 +798,7 @@ function generateBannerCss(): string {
       opacity: 0;
       width: 0;
       height: 0;
+      position: absolute;
     }
     
     .vp-slider {
@@ -541,36 +808,86 @@ function generateBannerCss(): string {
       left: 0;
       right: 0;
       bottom: 0;
-      background-color: #ccc;
-      transition: .4s;
-      border-radius: 24px;
+      background-color: #e0e0e0;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      border-radius: 28px;
     }
     
     .vp-slider:before {
       position: absolute;
       content: "";
-      height: 18px;
-      width: 18px;
-      left: 3px;
-      bottom: 3px;
-      background-color: white;
-      transition: .4s;
+      height: 24px;
+      width: 24px;
+      left: 2px;
+      bottom: 2px;
+      background-color: #ffffff;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       border-radius: 50%;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+    
+    .vp-slider:hover {
+      background-color: #d0d0d0;
     }
     
     input:checked + .vp-slider {
-      background-color: #007cba;
+      background-color: #000000;
+    }
+    
+    input:checked + .vp-slider:hover {
+      background-color: #333333;
     }
     
     input:disabled + .vp-slider {
-      background-color: #28a745;
+      background-color: #e8e8e8;
       cursor: not-allowed;
+      opacity: 0.6;
     }
     
     input:checked + .vp-slider:before,
     input:disabled + .vp-slider:before {
       transform: translateX(20px);
+    }
+    
+    input:focus + .vp-slider {
+      box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Mobile Responsive - Modal */
+    @media (max-width: 768px) {
+      .vp-modal-content {
+        width: calc(100% - 24px);
+        max-height: 90vh;
+        border-radius: 12px;
+      }
+      
+      .vp-modal-header {
+        padding: 20px 20px 16px 20px;
+      }
+      
+      .vp-modal-header h3 {
+        font-size: 18px;
+      }
+      
+      .vp-modal-body {
+        padding: 20px;
+      }
+      
+      .vp-modal-footer {
+        padding: 16px 20px 20px 20px;
+      }
+      
+      .vp-modal-footer-actions {
+        flex-direction: column;
+      }
+      
+      .vp-category {
+        padding: 16px;
+      }
+      
+      .vp-category-header {
+        gap: 12px;
+      }
     }
     
     @media (max-width: 768px) {
@@ -623,15 +940,14 @@ function generateBannerCss(): string {
 
 function generatePolicyModalCss(): string {
   return `
-    /* Policy Modal Specific Styles */
+    /* Policy Modal - Inherits base modal styles, only adds specific overrides */
     .vp-policy-modal .vp-modal-content {
       max-width: 800px;
-      max-height: 85vh;
-      display: flex;
-      flex-direction: column;
-      /* Performance optimization for animations */
+      /* GPU acceleration for smooth animations */
+      will-change: transform, opacity;
       transform: translateZ(0);
       backface-visibility: hidden;
+      -webkit-font-smoothing: antialiased;
     }
     
     .vp-policy-modal .vp-modal-backdrop {
@@ -640,106 +956,59 @@ function generatePolicyModalCss(): string {
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(0, 0, 0, 0.5);
       z-index: -1;
+      /* GPU acceleration for backdrop */
+      will-change: opacity;
+      transform: translateZ(0);
     }
     
-    .vp-policy-header {
-      position: sticky;
-      top: 0;
-      background: white;
-      z-index: 10;
-      padding: 20px 30px;
-      border-bottom: 1px solid #e0e0e0;
-      margin-bottom: 0;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      transition: box-shadow 0.2s ease;
-    }
-    
-    .vp-policy-header.scrolled {
-      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-    }
-    
-    .vp-policy-body {
-      padding: 20px 30px;
-      overflow-y: auto;
-      flex: 1;
-      max-height: calc(85vh - 80px);
-      /* Performance optimizations */
-      scroll-behavior: smooth;
-      -webkit-overflow-scrolling: touch;
-      will-change: scroll-position;
-    }
-    
+    /* Policy content styling */
     .vp-policy-text {
       color: #333;
-      line-height: 1.7;
+      line-height: 1.6;
     }
     
     .vp-policy-text h1 {
       font-size: 24px;
       margin: 0 0 20px 0;
-      color: #222;
       font-weight: 600;
+      color: #000;
     }
     
     .vp-policy-text h2 {
-      font-size: 20px;
+      font-size: 18px;
       margin: 30px 0 15px 0;
-      color: #333;
       font-weight: 600;
-      border-bottom: 2px solid #e0e0e0;
-      padding-bottom: 8px;
+      color: #000;
+      border-bottom: 1px solid #f0f0f0;
+      padding-bottom: 12px;
     }
     
     .vp-policy-text h3 {
       font-size: 16px;
       margin: 20px 0 10px 0;
-      color: #444;
       font-weight: 600;
+      color: #333;
     }
     
     .vp-policy-text p {
-      margin: 0 0 15px 0;
+      margin: 0 0 16px 0;
       font-size: 14px;
-      color: #555;
+      color: #666;
     }
     
-    .vp-policy-text ul,
-    .vp-policy-text ol {
-      margin: 0 0 15px 20px;
-      padding-left: 20px;
+    .vp-policy-text ul, .vp-policy-text ol {
+      margin: 0 0 16px 0;
+      padding-left: 24px;
+      color: #666;
     }
     
     .vp-policy-text li {
       margin-bottom: 8px;
       font-size: 14px;
-      color: #555;
     }
     
-    .vp-policy-text strong {
-      font-weight: 600;
-      color: #222;
-    }
-    
-    .vp-policy-text a {
-      color: #007cba;
-      text-decoration: underline;
-    }
-    
-    .vp-policy-text a:hover {
-      color: #005a87;
-    }
-    
-    .vp-policy-text a:focus {
-      outline: 2px solid #007cba;
-      outline-offset: 2px;
-      border-radius: 2px;
-    }
-    
-    /* Loading State */
+    /* Loading state */
     .vp-loading {
       text-align: center;
       padding: 60px 20px;
@@ -749,8 +1018,8 @@ function generatePolicyModalCss(): string {
       display: inline-block;
       width: 40px;
       height: 40px;
-      border: 4px solid #f3f3f3;
-      border-top: 4px solid #007cba;
+      border: 4px solid #f0f0f0;
+      border-top: 4px solid #000;
       border-radius: 50%;
       animation: vp-spin 1s linear infinite;
       margin-bottom: 15px;
@@ -767,206 +1036,54 @@ function generatePolicyModalCss(): string {
       margin: 0;
     }
     
-    /* Error State */
+    /* Error state */
     .vp-error {
       text-align: center;
       padding: 60px 20px;
       color: #d32f2f;
     }
     
-    .vp-error p {
-      margin: 0;
-      font-size: 14px;
-      font-weight: 500;
-    }
-    
-    /* Policy Links in Banner */
-    .vp-banner-links,
-    .banner-links {
-      margin-top: 15px;
-      padding-top: 15px;
-      border-top: 1px solid #e0e0e0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      font-size: 13px;
-    }
-    
-    .vp-policy-link,
-    .banner-link {
-      background: none;
-      border: none;
-      color: #007cba;
-      text-decoration: underline;
-      cursor: pointer;
-      padding: 4px 8px;
-      font-size: 13px;
-      font-family: inherit;
-      transition: color 0.2s ease, background-color 0.2s ease;
-      border-radius: 3px;
-    }
-    
-    .vp-policy-link:hover,
-    .banner-link:hover {
-      color: #005a87;
-      background-color: rgba(0, 124, 186, 0.05);
-    }
-    
-    .vp-policy-link:focus,
-    .banner-link:focus {
-      outline: 2px solid #007cba;
-      outline-offset: 2px;
-      border-radius: 3px;
-      background-color: rgba(0, 124, 186, 0.1);
-    }
-    
-    .vp-policy-link:active,
-    .banner-link:active {
-      color: #004466;
-    }
-    
-    .vp-separator,
-    .separator {
-      color: #999;
-      user-select: none;
-      pointer-events: none;
-    }
-    
-    /* Close Button Accessibility */
-    .vp-policy-header .vp-close {
-      background: none;
-      border: none;
-      font-size: 28px;
-      cursor: pointer;
-      color: #666;
-      padding: 4px 8px;
-      width: 36px;
-      height: 36px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 4px;
-      transition: background-color 0.2s ease, color 0.2s ease;
-    }
-    
-    .vp-policy-header .vp-close:hover {
-      background: #f0f0f0;
-      color: #333;
-    }
-    
-    .vp-policy-header .vp-close:focus {
-      outline: 2px solid #007cba;
-      outline-offset: 2px;
-      background: #e8f4f8;
-    }
-    
-    /* Mobile Responsive Styles */
+    /* Mobile Responsive - Policy Modal */
     @media (max-width: 768px) {
       .vp-policy-modal .vp-modal-content {
-        max-width: 95%;
-        max-height: 90vh;
         width: 95%;
+        max-height: 90vh;
+        border-radius: 12px;
       }
       
-      .vp-policy-header {
-        padding: 15px 20px;
+      /* Ensure tables are scrollable on mobile */
+      .vp-policy-text table {
+        display: block;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        white-space: nowrap;
       }
       
-      .vp-policy-body {
-        padding: 15px 20px;
-        max-height: calc(90vh - 70px);
+      /* Set minimum font size for mobile */
+      .vp-policy-text,
+      .vp-policy-text p,
+      .vp-policy-text li {
+        font-size: 13px !important;
       }
       
       .vp-policy-text h1 {
         font-size: 20px;
-        margin-bottom: 15px;
       }
       
       .vp-policy-text h2 {
-        font-size: 18px;
-        margin: 25px 0 12px 0;
+        font-size: 16px;
       }
       
       .vp-policy-text h3 {
-        font-size: 15px;
-        margin: 18px 0 8px 0;
-      }
-      
-      .vp-policy-text p,
-      .vp-policy-text li {
-        font-size: 13px;
-      }
-      
-      .vp-banner-links,
-      .banner-links {
-        flex-wrap: wrap;
-        gap: 6px;
-      }
-      
-      .vp-loading {
-        padding: 40px 15px;
-      }
-      
-      .vp-spinner {
-        width: 35px;
-        height: 35px;
-        border-width: 3px;
-      }
-      
-      .vp-error {
-        padding: 40px 15px;
+        font-size: 14px;
       }
     }
     
-    /* Smooth Scrolling */
-    .vp-policy-body {
-      scroll-behavior: smooth;
-      -webkit-overflow-scrolling: touch;
-    }
-    
-    /* Scrollbar Styling (Webkit browsers) */
-    .vp-policy-body::-webkit-scrollbar {
-      width: 8px;
-    }
-    
-    .vp-policy-body::-webkit-scrollbar-track {
-      background: #f1f1f1;
-      border-radius: 4px;
-    }
-    
-    .vp-policy-body::-webkit-scrollbar-thumb {
-      background: #c1c1c1;
-      border-radius: 4px;
-    }
-    
-    .vp-policy-body::-webkit-scrollbar-thumb:hover {
-      background: #a8a8a8;
-    }
-    
-    /* Accessibility - Reduced Motion */
-    @media (prefers-reduced-motion: reduce) {
-      .vp-spinner {
-        animation: none;
-        border-top-color: transparent;
-      }
-      
-      .vp-policy-body {
-        scroll-behavior: auto;
-      }
-      
-      .vp-policy-link,
-      .banner-link,
-      .vp-close {
-        transition: none;
-      }
-    }
-    
-    /* Print Styles */
-    @media print {
-      .vp-policy-modal {
-        display: none !important;
-      }
+    /* Prevent body scroll when modal is open */
+    body.vp-modal-open {
+      overflow: hidden;
+      position: fixed;
+      width: 100%;
     }
   `
 }
@@ -1379,6 +1496,9 @@ function getPolicyModalJs(): string {
         // Store currently focused element for later restoration
         this.lastFocusedElement = document.activeElement;
         
+        // Prevent body scroll
+        document.body.classList.add('vp-modal-open');
+        
         // Show modal
         this.modal.style.display = 'flex';
         this.modal.setAttribute('aria-hidden', 'false');
@@ -1445,6 +1565,9 @@ function getPolicyModalJs(): string {
       }
       
       try {
+        // Re-enable body scroll
+        document.body.classList.remove('vp-modal-open');
+        
         // Hide modal
         this.modal.style.display = 'none';
         this.modal.setAttribute('aria-hidden', 'true');

@@ -67,6 +67,9 @@
           this.enforceConsent();
         }
         
+        // Setup policy modal event listeners
+        this.setupPolicyModal();
+        
         // Start periodic scanning
         this.startPeriodicScanning();
         
@@ -393,8 +396,13 @@
               </div>
             </div>
             <div class="vp-modal-footer">
-              <button id="vp-save-settings" class="vp-btn vp-btn-primary">Save Settings</button>
-              <button id="vp-cancel-settings" class="vp-btn vp-btn-secondary">Cancel</button>
+              <div class="vp-modal-footer-actions">
+                <button id="vp-save-settings" class="vp-btn vp-btn-primary">Save Settings</button>
+                <button id="vp-cancel-settings" class="vp-btn vp-btn-secondary">Cancel</button>
+              </div>
+              <div class="vp-branding">
+                <a href="https://visionmedia.io" target="_blank" rel="noopener noreferrer">Drivs av Vision Media</a>
+              </div>
             </div>
           </div>
         </div>
@@ -1435,6 +1443,337 @@
         cookies_detected: lastScan.detected_cookies.length,
         categories
       };
+    }
+
+    /**
+     * Fetch policy content from API
+     */
+    async fetchPolicy(policyType) {
+      try {
+        const response = await this.makeRequest(`/api/policy/${this.siteId}/${policyType}`, {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch policy: ${response.status}`);
+        }
+
+        const data = await response.json();
+        
+        if (!data.success || !data.data || !data.data.content) {
+          throw new Error('Invalid policy response format');
+        }
+
+        return data.data.content;
+        
+      } catch (error) {
+        console.error('Failed to fetch policy:', error);
+        throw error;
+      }
+    }
+
+    /**
+     * Open policy modal
+     */
+    async openPolicy(policyType) {
+      const modal = document.getElementById('vp-policy-modal');
+      if (!modal) {
+        console.warn('Policy modal not found');
+        return;
+      }
+
+      // Store last focused element for accessibility
+      this.lastFocusedElement = document.activeElement;
+      this.currentPolicyType = policyType;
+
+      // Show modal and update ARIA attributes
+      modal.style.display = 'flex';
+      modal.setAttribute('aria-hidden', 'false');
+
+      // Set title
+      const title = document.getElementById('vp-policy-title');
+      if (title) {
+        title.textContent = policyType === 'privacy' ? 'Integritetspolicy' : 'Cookiepolicy';
+      }
+
+      // Load policy content
+      await this.loadPolicyContent(policyType);
+
+      // Trap focus for accessibility
+      this.trapPolicyFocus();
+    }
+
+    /**
+     * Load policy content into modal
+     */
+    async loadPolicyContent(policyType) {
+      const loadingEl = document.getElementById('vp-policy-loading');
+      const contentEl = document.getElementById('vp-policy-content');
+      const errorEl = document.getElementById('vp-policy-error');
+
+      // Batch DOM updates to minimize reflows
+      const showLoading = () => {
+        if (loadingEl) loadingEl.style.display = 'block';
+        if (contentEl) contentEl.style.display = 'none';
+        if (errorEl) errorEl.style.display = 'none';
+      };
+
+      const showContent = (content) => {
+        // Use requestAnimationFrame to batch DOM updates
+        requestAnimationFrame(() => {
+          if (loadingEl) loadingEl.style.display = 'none';
+          if (contentEl) {
+            contentEl.style.display = 'block';
+            // Single innerHTML update instead of multiple DOM operations
+            contentEl.innerHTML = content;
+          }
+          if (errorEl) errorEl.style.display = 'none';
+        });
+      };
+
+      const showError = () => {
+        requestAnimationFrame(() => {
+          if (loadingEl) loadingEl.style.display = 'none';
+          if (contentEl) contentEl.style.display = 'none';
+          if (errorEl) errorEl.style.display = 'block';
+        });
+      };
+
+      showLoading();
+
+      try {
+        const content = await this.fetchPolicy(policyType);
+        showContent(content);
+
+        // Update focus trap to include new focusable elements in content
+        this.trapPolicyFocus();
+        
+      } catch (error) {
+        console.error('Failed to load policy:', error);
+        showError();
+
+        // Update focus trap for error state
+        this.trapPolicyFocus();
+      }
+    }
+
+    /**
+     * Close policy modal
+     */
+    closePolicy() {
+      const modal = document.getElementById('vp-policy-modal');
+      if (!modal) return;
+
+      // Remove focus trap
+      this.removePolicyFocusTrap();
+
+      // Hide modal and update ARIA attributes
+      modal.style.display = 'none';
+      modal.setAttribute('aria-hidden', 'true');
+      this.currentPolicyType = null;
+
+      // Return focus to triggering element
+      if (this.lastFocusedElement && typeof this.lastFocusedElement.focus === 'function') {
+        try {
+          this.lastFocusedElement.focus();
+        } catch (error) {
+          console.warn('Failed to return focus:', error);
+        }
+        this.lastFocusedElement = null;
+      }
+    }
+
+    /**
+     * Handle settings link click from policy modal
+     */
+    handlePolicySettingsLink() {
+      // Store the settings link as the last focused element
+      // so focus returns to it if settings modal is closed
+      const settingsLink = document.activeElement;
+      
+      // Close policy modal
+      this.closePolicy();
+
+      // Open settings modal after a brief delay
+      setTimeout(() => {
+        this.showSettings();
+        
+        // Focus the first interactive element in settings modal
+        if (this.settingsModal) {
+          const firstFocusable = this.settingsModal.querySelector(
+            'button:not([disabled]), [href]:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled])'
+          );
+          if (firstFocusable) {
+            firstFocusable.focus();
+          }
+        }
+      }, 100);
+    }
+
+    /**
+     * Trap focus within policy modal for accessibility
+     */
+    trapPolicyFocus() {
+      const modal = document.getElementById('vp-policy-modal');
+      if (!modal) return;
+
+      // Remove any existing focus trap handler
+      if (this.policyFocusTrapHandler) {
+        modal.removeEventListener('keydown', this.policyFocusTrapHandler);
+      }
+
+      // Get all focusable elements
+      const getFocusableElements = () => {
+        return modal.querySelectorAll(
+          'button:not([disabled]), [href]:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"]):not([disabled])'
+        );
+      };
+
+      // Focus the first focusable element
+      const focusableElements = getFocusableElements();
+      if (focusableElements.length > 0) {
+        // Focus the close button first as it's the most common action
+        const closeButton = modal.querySelector('#vp-close-policy');
+        if (closeButton) {
+          closeButton.focus();
+        } else {
+          focusableElements[0].focus();
+        }
+      }
+
+      // Create focus trap handler
+      this.policyFocusTrapHandler = (e) => {
+        if (e.key !== 'Tab') return;
+
+        const focusableElements = getFocusableElements();
+        if (focusableElements.length === 0) return;
+
+        const firstElement = focusableElements[0];
+        const lastElement = focusableElements[focusableElements.length - 1];
+
+        if (e.shiftKey) {
+          // Shift + Tab
+          if (document.activeElement === firstElement) {
+            e.preventDefault();
+            lastElement.focus();
+          }
+        } else {
+          // Tab
+          if (document.activeElement === lastElement) {
+            e.preventDefault();
+            firstElement.focus();
+          }
+        }
+      };
+
+      modal.addEventListener('keydown', this.policyFocusTrapHandler);
+    }
+
+    /**
+     * Remove focus trap from policy modal
+     */
+    removePolicyFocusTrap() {
+      const modal = document.getElementById('vp-policy-modal');
+      if (modal && this.policyFocusTrapHandler) {
+        modal.removeEventListener('keydown', this.policyFocusTrapHandler);
+        this.policyFocusTrapHandler = null;
+      }
+    }
+
+    /**
+     * Setup policy modal event listeners
+     */
+    setupPolicyModal() {
+      // Policy link clicks (both in banner and within policy content)
+      const handlePolicyLinkActivation = (e, policyLink) => {
+        e.preventDefault();
+        const policyType = policyLink.dataset.policy;
+        
+        const modal = document.getElementById('vp-policy-modal');
+        // Check if we're navigating within an open modal
+        const isInModal = modal && modal.contains(policyLink);
+        if (isInModal && modal.style.display !== 'none') {
+          // Cross-policy navigation - keep modal open
+          this.loadPolicyContent(policyType);
+          // Update title
+          const title = document.getElementById('vp-policy-title');
+          if (title) {
+            title.textContent = policyType === 'privacy' ? 'Integritetspolicy' : 'Cookiepolicy';
+          }
+          this.currentPolicyType = policyType;
+        } else {
+          // Opening policy from banner or other location
+          this.openPolicy(policyType);
+        }
+      };
+
+      document.addEventListener('click', (e) => {
+        const policyLink = e.target.closest('[data-policy]');
+        if (policyLink) {
+          handlePolicyLinkActivation(e, policyLink);
+        }
+      });
+
+      // Keyboard support for policy links
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          const policyLink = e.target.closest('[data-policy]');
+          if (policyLink) {
+            handlePolicyLinkActivation(e, policyLink);
+          }
+        }
+      });
+
+      // Settings link clicks and keyboard support
+      const handleSettingsLinkActivation = (e, settingsLink) => {
+        const modal = document.getElementById('vp-policy-modal');
+        if (settingsLink && modal && modal.style.display !== 'none') {
+          e.preventDefault();
+          this.handlePolicySettingsLink();
+        }
+      };
+
+      document.addEventListener('click', (e) => {
+        const settingsLink = e.target.closest('.vp-settings-link');
+        if (settingsLink) {
+          handleSettingsLinkActivation(e, settingsLink);
+        }
+      });
+
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          const settingsLink = e.target.closest('.vp-settings-link');
+          if (settingsLink) {
+            handleSettingsLinkActivation(e, settingsLink);
+          }
+        }
+      });
+
+      // Close button
+      const closeBtn = document.getElementById('vp-close-policy');
+      if (closeBtn) {
+        closeBtn.addEventListener('click', () => this.closePolicy());
+      }
+
+      // Backdrop click
+      const modal = document.getElementById('vp-policy-modal');
+      if (modal) {
+        const backdrop = modal.querySelector('.vp-modal-backdrop');
+        if (backdrop) {
+          backdrop.addEventListener('click', () => this.closePolicy());
+        }
+      }
+
+      // Escape key
+      document.addEventListener('keydown', (e) => {
+        const modal = document.getElementById('vp-policy-modal');
+        if (e.key === 'Escape' && modal && modal.style.display !== 'none') {
+          this.closePolicy();
+        }
+      });
     }
   }
 

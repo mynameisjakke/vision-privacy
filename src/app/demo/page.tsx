@@ -37,7 +37,7 @@ export default function DemoPage() {
     console.log('🚫 Banner hidden')
   }
 
-  const submitConsent = async (siteId: string, categories: string[]) => {
+  const submitConsent = useCallback(async (siteId: string, categories: string[]) => {
     try {
       const response = await fetch('/api/demo-consent', {
         method: 'POST',
@@ -110,9 +110,21 @@ export default function DemoPage() {
     } catch (error) {
       console.error('Failed to submit consent:', error)
     }
-  }
+  })
 
   const showCustomizeModal = useCallback((siteId: string, categories: any[]) => {
+    // Read saved consent from localStorage
+    const savedConsent = localStorage.getItem('vision-privacy-consent')
+    let savedCategories: string[] = []
+    if (savedConsent) {
+      try {
+        const parsed = JSON.parse(savedConsent)
+        savedCategories = parsed.categories || []
+      } catch (e) {
+        console.error('Failed to parse saved consent:', e)
+      }
+    }
+    
     // Create a simple modal for category selection
     const modal = document.createElement('div')
     modal.className = 'vision-privacy-modal'
@@ -122,58 +134,152 @@ export default function DemoPage() {
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(0,0,0,0.5);
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(4px);
       display: flex;
       align-items: center;
       justify-content: center;
-      z-index: 10001;
+      z-index: 1000000;
+      animation: vp-fade-in 0.2s ease-out;
     `
 
     const modalContent = document.createElement('div')
     modalContent.style.cssText = `
-      background: white;
-      padding: 2rem;
-      border-radius: 8px;
-      max-width: 500px;
-      width: 90%;
-      max-height: 80vh;
-      overflow-y: auto;
+      background: #ffffff;
+      border-radius: 16px;
+      max-width: 600px;
+      width: calc(100% - 32px);
+      max-height: 85vh;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      display: flex;
+      flex-direction: column;
+      animation: vp-modal-slide-up 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
     `
+
+    const categoryDescriptions: Record<string, string> = {
+      essential: 'Nödvändiga cookies är avgörande för webbplatsens grundläggande funktioner såsom säker inloggning, sessionshantering och säkerhetsfunktioner. Dessa cookies lagrar ingen personligt identifierbar information och kan inte stängas av enligt GDPR Artikel 6(1)(f) då de är nödvändiga för att tillhandahålla den tjänst du uttryckligen begärt.',
+      functional: 'Funktionella cookies möjliggör förbättrad funktionalitet och personalisering, såsom videospelare, live-chattar och språkval. De kan sättas av oss eller av tredjepartsleverantörer vars tjänster vi använder. Om du inte tillåter dessa cookies kan vissa eller alla dessa funktioner inte fungera korrekt. Behandlingen baseras på ditt samtycke enligt GDPR Artikel 6(1)(a).',
+      analytics: 'Analyscookies hjälper oss att förstå hur besökare interagerar med webbplatsen genom att samla in och rapportera information anonymt. Vi använder dessa för att förbättra webbplatsens prestanda och användarupplevelse. Informationen som samlas in inkluderar antal besökare, varifrån de kommer och vilka sidor de besöker. Behandlingen kräver ditt samtycke enligt e-Privacy-direktivet och GDPR Artikel 6(1)(a).',
+      advertising: 'Marknadsföringscookies används för att spåra besökare över webbplatser för att visa relevanta och engagerande annonser. De kan användas av annonspartners för att bygga en profil av dina intressen och visa relevanta annonser på andra webbplatser. Dessa cookies lagrar information om din webbläsaraktivitet. Behandlingen kräver ditt uttryckliga samtycke enligt GDPR Artikel 6(1)(a) och e-Privacy-direktivet.'
+    }
 
     let modalHTML = `
-      <h3 style="margin-top: 0;">Anpassa cookie-inställningar</h3>
-      <p>Välj vilka typer av cookies du vill tillåta:</p>
-      <form id="cookie-preferences-form">
+      <div style="padding: 24px 24px 20px 24px; border-bottom: 1px solid #f0f0f0; position: relative;">
+        <button type="button" id="close-modal" style="position: absolute; left: 20px; top: 50%; transform: translateY(-50%); background: none; border: none; font-size: 24px; cursor: pointer; color: #666; padding: 4px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px; transition: all 0.2s ease;">&times;</button>
+        <h3 style="margin: 0; font-size: 20px; font-weight: 600; color: #000; text-align: center; padding-right: 30px;">Cookie-inställningar</h3>
+      </div>
+      <div style="padding: 24px; overflow-y: auto; flex: 1;">
+        <p style="margin: 0 0 24px 0; color: #666; line-height: 1.6; font-size: 14px;">Vi använder cookies och liknande tekniker för att förbättra din upplevelse på vår webbplats. Vissa cookies är nödvändiga för webbplatsens funktion, medan andra hjälper oss att analysera och förbättra webbplatsen samt visa personligt anpassat innehåll. Du kan när som helst ändra dina inställningar.</p>
+        <form id="cookie-preferences-form">
     `
 
-    categories.forEach(category => {
-      const checked = category.is_essential ? 'checked disabled' : ''
+    categories.forEach((category, index) => {
+      // Check if this category was previously consented
+      const wasConsented = savedCategories.includes(category.id)
+      const checked = category.is_essential || wasConsented ? 'checked' : ''
       const disabled = category.is_essential ? 'disabled' : ''
+      const isExpanded = category.is_essential // Only essential is expanded by default
+      const description = categoryDescriptions[category.id] || category.description
+      
       modalHTML += `
-        <div style="margin: 1rem 0; padding: 1rem; border: 1px solid #ddd; border-radius: 4px;">
-          <label style="display: flex; align-items: flex-start; gap: 0.5rem;">
-            <input type="checkbox" name="category" value="${category.id}" ${checked} ${disabled}>
-            <div>
-              <strong>${category.name}</strong>
-              ${category.is_essential ? '<span style="color: #666; font-size: 0.8em;">(Krävs)</span>' : ''}
-              <p style="margin: 0.5rem 0 0 0; color: #666; font-size: 0.9em;">${category.description}</p>
+        <div class="cookie-category" data-category-id="${category.id}" style="margin-bottom: 12px; border: 1px solid #e8e8e8; border-radius: 12px; background: #ffffff; transition: all 0.2s ease;">
+          <div style="padding: 18px; display: flex; justify-content: space-between; align-items: center; gap: 16px;">
+            <div style="flex: 1; min-width: 0;">
+              <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 4px;">
+                <button type="button" class="accordion-toggle" data-target="desc-${category.id}" style="background: none; border: none; cursor: pointer; padding: 0; color: #666; font-size: 18px; line-height: 1; transition: transform 0.2s ease; transform: rotate(${isExpanded ? '0deg' : '-90deg'});">▼</button>
+                <div style="font-weight: 600; font-size: 15px; color: #000; display: flex; align-items: center; gap: 8px;">
+                  ${category.name}
+                  ${category.is_essential ? '<span style="background: #e8e8e8; color: #666; font-size: 10px; font-weight: 600; padding: 3px 8px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.5px;">KRÄVS</span>' : ''}
+                </div>
+              </div>
             </div>
-          </label>
+            <div class="toggle-wrapper" style="position: relative; display: inline-block; width: 48px; height: 28px; flex-shrink: 0;">
+              <input type="checkbox" class="toggle-input" name="category" value="${category.id}" ${checked} ${disabled} data-category="${category.id}" style="opacity: 0; width: 0; height: 0; position: absolute;">
+              <span class="toggle-slider" style="position: absolute; cursor: ${category.is_essential ? 'not-allowed' : 'pointer'}; top: 0; left: 0; right: 0; bottom: 0; background-color: ${checked ? '#000000' : '#e0e0e0'}; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); border-radius: 28px; ${category.is_essential ? 'opacity: 0.6;' : ''}">
+                <span class="toggle-knob" style="position: absolute; content: ''; height: 24px; width: 24px; left: 2px; bottom: 2px; background-color: #ffffff; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); border-radius: 50%; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); transform: ${checked ? 'translateX(20px)' : 'translateX(0)'};"></span>
+              </span>
+            </div>
+          </div>
+          <div id="desc-${category.id}" class="accordion-content" style="max-height: ${isExpanded ? '500px' : '0'}; overflow: hidden; transition: max-height 0.3s ease;">
+            <div style="padding: 0 18px 18px 18px;">
+              <p style="margin: 0; color: #666; font-size: 13px; line-height: 1.6; padding-left: 30px;">${description}</p>
+            </div>
+          </div>
         </div>
       `
     })
 
     modalHTML += `
-        <div style="margin-top: 2rem; display: flex; gap: 1rem; justify-content: flex-end;">
-          <button type="button" id="cancel-preferences" style="padding: 0.5rem 1rem; border: 1px solid #ddd; background: white; border-radius: 4px; cursor: pointer;">Avbryt</button>
-          <button type="submit" style="padding: 0.5rem 1rem; background: #007cba; color: white; border: none; border-radius: 4px; cursor: pointer;">Spara inställningar</button>
+        </form>
+      </div>
+      <div style="padding: 20px 24px 24px 24px; display: flex; flex-direction: column; gap: 16px; border-top: 1px solid #f0f0f0;">
+        <div style="display: flex; gap: 12px;">
+          <button type="button" id="cancel-preferences" style="flex: 1; padding: 10px 20px; background: #ffffff; color: #333; border: 1px solid #e0e0e0; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 500; transition: all 0.2s ease;">Avbryt</button>
+          <button type="submit" form="cookie-preferences-form" style="flex: 1; padding: 10px 24px; background: #000000; color: #ffffff; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 500; transition: all 0.2s ease;">Spara inställningar</button>
         </div>
-      </form>
+        <div style="display: flex; align-items: center; justify-content: center; gap: 8px; padding-top: 12px; border-top: 1px solid #f5f5f5; font-size: 13px;">
+          <button type="button" class="vp-policy-link" data-policy="privacy" style="background: none; border: none; color: #666; text-decoration: underline; cursor: pointer; padding: 0; font-size: 13px; transition: color 0.2s ease;">Integritetspolicy</button>
+          <span style="color: #999;">•</span>
+          <button type="button" class="vp-policy-link" data-policy="cookie" style="background: none; border: none; color: #666; text-decoration: underline; cursor: pointer; padding: 0; font-size: 13px; transition: color 0.2s ease;">Cookiepolicy</button>
+        </div>
+        <div style="text-align: center; padding-top: 16px; margin-top: 16px; border-top: 1px solid #f5f5f5;">
+          <a href="https://visionmedia.io" target="_blank" rel="noopener noreferrer" style="font-size: 11px; color: #999; text-decoration: none; transition: color 0.2s ease;">Drivs av Vision Media</a>
+        </div>
+      </div>
     `
 
     modalContent.innerHTML = modalHTML
     modal.appendChild(modalContent)
     document.body.appendChild(modal)
+
+    // Handle close button (X)
+    document.getElementById('close-modal')?.addEventListener('click', () => {
+      document.body.removeChild(modal)
+    })
+
+    // Handle toggle switches
+    modal.querySelectorAll('.toggle-wrapper').forEach(wrapper => {
+      const input = wrapper.querySelector('.toggle-input') as HTMLInputElement
+      const slider = wrapper.querySelector('.toggle-slider') as HTMLElement
+      const knob = wrapper.querySelector('.toggle-knob') as HTMLElement
+      
+      if (!input || input.disabled) return
+      
+      wrapper.addEventListener('click', (e) => {
+        e.preventDefault()
+        input.checked = !input.checked
+        
+        // Update visual state
+        if (input.checked) {
+          slider.style.backgroundColor = '#000000'
+          knob.style.transform = 'translateX(20px)'
+        } else {
+          slider.style.backgroundColor = '#e0e0e0'
+          knob.style.transform = 'translateX(0)'
+        }
+      })
+    })
+
+    // Handle accordion toggles
+    modal.querySelectorAll('.accordion-toggle').forEach(btn => {
+      const button = btn as HTMLButtonElement
+      button.addEventListener('click', (e) => {
+        e.preventDefault()
+        const target = button.getAttribute('data-target')
+        const content = document.getElementById(target!) as HTMLElement
+        const isExpanded = content.style.maxHeight !== '0px' && content.style.maxHeight !== ''
+        
+        if (isExpanded) {
+          content.style.maxHeight = '0'
+          button.style.transform = 'rotate(-90deg)'
+        } else {
+          content.style.maxHeight = '500px'
+          button.style.transform = 'rotate(0deg)'
+        }
+      })
+    })
 
     // Handle form submission
     const form = document.getElementById('cookie-preferences-form')
