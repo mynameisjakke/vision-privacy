@@ -227,7 +227,8 @@ export async function withAuthMiddleware(
 
   // Origin validation (for authenticated requests)
   if (validateOrigin && authContext.isAuthenticated && authContext.site) {
-    if (!isAllowedOrigin(request, authContext.site.domain)) {
+    const origin = request.headers.get('origin')
+    if (!isAllowedOrigin(origin)) {
       const corsHeaders = getCorsHeaders(corsOrigins, request)
       return {
         success: false,
