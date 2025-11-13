@@ -453,12 +453,21 @@ export class PolicyTemplatesDB {
     return data
   }
 
+  static async deactivateByType(templateType: string): Promise<void> {
+    const { error } = await supabase
+      .from(TABLES.POLICY_TEMPLATES)
+      .update({ is_active: false, updated_at: new Date().toISOString() })
+      .eq('template_type', templateType)
+    
+    if (error) {
+      const { error: errorMsg } = handleSupabaseError(error)
+      throw new Error(`Failed to deactivate templates: ${errorMsg}`)
+    }
+  }
+
   static async setActive(id: string, templateType: string): Promise<PolicyTemplate> {
     // First deactivate all templates of this type
-    await supabase
-      .from(TABLES.POLICY_TEMPLATES)
-      .update({ is_active: false })
-      .eq('template_type', templateType)
+    await this.deactivateByType(templateType)
 
     // Then activate the specified template
     const { data, error } = await supabase
