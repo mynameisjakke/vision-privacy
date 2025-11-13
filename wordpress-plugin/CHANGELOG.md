@@ -2,6 +2,18 @@
 
 All notable changes to the Vision Privacy WordPress plugin will be documented in this file.
 
+## [1.0.2] - 2025-11-13
+
+### Fixed
+- **API Compatibility**: Fixed domain format - now sends full URL instead of hostname only
+- **Plugin Data Format**: Fixed installed_plugins format - now sends array of strings instead of objects
+- **Registration**: Resolved validation errors during site registration
+
+### Technical Details
+- Domain now sent as full URL (e.g., "https://example.com" instead of "example.com")
+- Plugins formatted as strings: "Plugin Name v1.0.0 (active/inactive)"
+- Fixes HTTP 400 validation errors
+
 ## [1.0.1] - 2025-11-13
 
 ### Changed

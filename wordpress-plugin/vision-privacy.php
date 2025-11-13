@@ -3,7 +3,7 @@
  * Plugin Name: Vision Privacy
  * Plugin URI: https://visionmedia.se
  * Description: Centralized privacy and cookie policy management for GDPR/IMY compliance
- * Version: 1.0.1
+ * Version: 1.0.2
  * Author: Jakob Bourhil @ Vision Media
  * Author URI: https://visionmedia.io
  * License: GPL v2 or later
@@ -22,7 +22,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('VISION_PRIVACY_VERSION', '1.0.1');
+define('VISION_PRIVACY_VERSION', '1.0.2');
 define('VISION_PRIVACY_PLUGIN_FILE', __FILE__);
 define('VISION_PRIVACY_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('VISION_PRIVACY_PLUGIN_URL', plugin_dir_url(__FILE__));
@@ -215,9 +215,8 @@ class VisionPrivacyPlugin {
      * Get site domain (normalized)
      */
     private function get_site_domain() {
-        $site_url = get_site_url();
-        $parsed = parse_url($site_url);
-        return $parsed['host'] ?? '';
+        // Return full URL as required by API
+        return get_site_url();
     }
     
     /**
@@ -233,14 +232,13 @@ class VisionPrivacyPlugin {
         
         $plugin_data = array();
         foreach ($all_plugins as $plugin_file => $plugin_info) {
-            $plugin_data[] = array(
-                'name' => $plugin_info['Name'],
-                'version' => $plugin_info['Version'],
-                'file' => $plugin_file,
-                'active' => in_array($plugin_file, $active_plugins),
-                'description' => $plugin_info['Description'] ?? '',
-                'author' => $plugin_info['Author'] ?? '',
-                'network' => $plugin_info['Network'] ?? false
+            // Format as string: "Plugin Name v1.0.0 (active/inactive)"
+            $status = in_array($plugin_file, $active_plugins) ? 'active' : 'inactive';
+            $plugin_data[] = sprintf(
+                '%s v%s (%s)',
+                $plugin_info['Name'],
+                $plugin_info['Version'],
+                $status
             );
         }
         
