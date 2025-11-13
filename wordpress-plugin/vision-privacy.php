@@ -3,7 +3,7 @@
  * Plugin Name: Vision Privacy
  * Plugin URI: https://visionmedia.se
  * Description: Centralized privacy and cookie policy management for GDPR/IMY compliance
- * Version: 1.0.0
+ * Version: 1.0.1
  * Author: Jakob Bourhil @ Vision Media
  * Author URI: https://visionmedia.io
  * License: GPL v2 or later
@@ -22,7 +22,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('VISION_PRIVACY_VERSION', '1.0.0');
+define('VISION_PRIVACY_VERSION', '1.0.1');
 define('VISION_PRIVACY_PLUGIN_FILE', __FILE__);
 define('VISION_PRIVACY_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('VISION_PRIVACY_PLUGIN_URL', plugin_dir_url(__FILE__));

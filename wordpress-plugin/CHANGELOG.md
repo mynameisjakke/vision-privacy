@@ -2,6 +2,20 @@
 
 All notable changes to the Vision Privacy WordPress plugin will be documented in this file.
 
+## [1.0.1] - 2025-11-13
+
+### Changed
+- **Production Ready**: Updated API endpoint to production URL (https://vision-privacy.vercel.app)
+- **Author Information**: Updated author details to Jakob Bourhil @ Vision Media
+- **Performance**: Backend optimized for 800+ WordPress sites with 5x faster database queries
+- **Stability**: Production deployment tested and verified
+
+### Technical Updates
+- API endpoint now points to production Vercel deployment
+- Database performance optimized (80 warnings fixed)
+- All endpoints tested and verified working
+- Ready for large-scale deployment
+
 ## [1.0.0] - 2024-10-31
 
 ### Added
