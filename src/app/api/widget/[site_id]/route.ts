@@ -257,6 +257,7 @@ function getDefaultBannerTemplate(): string {
           <button id="vp-close-settings" class="vp-close">&times;</button>
         </div>
         <div class="vp-modal-body">
+          <p class="vp-settings-intro">Vi använder cookies och liknande tekniker för att förbättra din upplevelse på vår webbplats. Vissa cookies är nödvändiga för webbplatsens funktion, medan andra hjälper oss att analysera och förbättra webbplatsen samt visa personligt anpassat innehåll. Du kan när som helst ändra dina inställningar.</p>
           <div id="vp-cookie-categories"></div>
         </div>
         <div class="vp-modal-footer">
@@ -696,6 +697,16 @@ function generateBannerCss(): string {
       font-size: 14px;
     }
     
+    .vp-settings-intro {
+      margin: 0 0 24px 0 !important;
+      padding: 16px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      color: #666 !important;
+      line-height: 1.6 !important;
+      font-size: 14px !important;
+    }
+    
     /* Modal Footer */
     .vp-modal-footer {
       padding: 20px 24px 24px 24px;
@@ -1079,6 +1090,31 @@ function generatePolicyModalCss(): string {
     .vp-policy-text {
       color: #333;
       line-height: 1.6;
+    }
+    
+    /* Settings link in policy content - should look like text link, not button */
+    .vp-policy-text .vp-settings-link {
+      background: none;
+      border: none;
+      color: #666;
+      text-decoration: underline;
+      cursor: pointer;
+      padding: 0;
+      font-size: 14px;
+      font-family: inherit;
+      line-height: inherit;
+      transition: color 0.2s ease;
+      display: inline;
+    }
+    
+    .vp-policy-text .vp-settings-link:hover {
+      color: #000;
+    }
+    
+    .vp-policy-text .vp-settings-link:focus {
+      outline: 2px solid #000;
+      outline-offset: 2px;
+      border-radius: 2px;
     }
     
     .vp-policy-text h1 {
