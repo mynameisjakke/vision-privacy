@@ -34,7 +34,10 @@ export const clientScanSchema = z.object({
     name: z.string().min(1, 'Cookie name is required'),
     domain: z.string().min(1, 'Cookie domain is required'),
     category: z.string().min(1, 'Cookie category is required'),
-    description: z.string().optional()
+    description: z.string().optional(),
+    storage_type: z.enum(['cookie', 'localStorage', 'sessionStorage']).optional(),
+    detected_at: z.string().optional(),
+    has_value: z.boolean().optional()
   })).default([]),
   scan_timestamp: z.string().datetime('Invalid scan timestamp')
 })

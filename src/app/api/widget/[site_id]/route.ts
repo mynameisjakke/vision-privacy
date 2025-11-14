@@ -15,7 +15,9 @@ interface WidgetConfigResponse {
   cookie_categories: Array<{
     id: string
     name: string
+    name_sv: string
     description: string
+    description_sv: string
     is_essential: boolean
     sort_order: number
   }>
@@ -24,6 +26,14 @@ interface WidgetConfigResponse {
   site_config: {
     domain: string
     scan_interval: number
+  }
+  site_metadata: {
+    company_name: string
+    contact_email: string
+    org_number: string
+    company_address: string
+    form_plugin: string
+    ecommerce_plugin: string
   }
 }
 
@@ -173,7 +183,7 @@ async function generateWidgetConfig(siteId: string): Promise<WidgetConfigRespons
     const floatingButtonJs = getFloatingButtonJs() + '\n\n' + getPolicyModalJs()
     const floatingButtonCss = getFloatingButtonCss()
     
-    // Build widget configuration response
+    // Build widget configuration response with all required fields
     return {
       banner_html: bannerHtml,
       banner_css: bannerCss,
@@ -182,7 +192,9 @@ async function generateWidgetConfig(siteId: string): Promise<WidgetConfigRespons
       cookie_categories: cookieCategories.map((category: any) => ({
         id: category.id,
         name: category.name,
+        name_sv: category.name, // Swedish name (database already has Swedish content)
         description: category.description || '',
+        description_sv: category.description || '', // Swedish description
         is_essential: category.is_essential,
         sort_order: category.sort_order
       })),
@@ -191,6 +203,14 @@ async function generateWidgetConfig(siteId: string): Promise<WidgetConfigRespons
       site_config: {
         domain: site.domain,
         scan_interval: 300000 // 5 minutes in milliseconds
+      },
+      site_metadata: {
+        company_name: site.company_name || site.domain || '',
+        contact_email: site.contact_email || '',
+        org_number: site.org_number || '',
+        company_address: site.company_address || '',
+        form_plugin: site.form_plugin || '',
+        ecommerce_plugin: site.ecommerce_plugin || ''
       }
     }
   } catch (error) {
@@ -754,6 +774,14 @@ function generateBannerCss(): string {
       justify-content: space-between;
       align-items: center;
       gap: 16px;
+      cursor: pointer;
+      user-select: none;
+    }
+    
+    .vp-category-header:focus {
+      outline: 2px solid #000;
+      outline-offset: 2px;
+      border-radius: 4px;
     }
     
     .vp-category-info {
@@ -765,10 +793,21 @@ function generateBannerCss(): string {
       font-weight: 600;
       font-size: 15px;
       color: #000;
-      margin-bottom: 6px;
+      margin-bottom: 0;
       display: flex;
       align-items: center;
       gap: 8px;
+    }
+    
+    .vp-expand-icon {
+      font-size: 12px;
+      transition: transform 0.2s ease;
+      display: inline-block;
+      margin-left: auto;
+    }
+    
+    .vp-category-header[aria-expanded="true"] .vp-expand-icon {
+      transform: rotate(180deg);
     }
     
     .vp-essential-badge {
@@ -782,11 +821,57 @@ function generateBannerCss(): string {
       letter-spacing: 0.5px;
     }
     
+    .vp-category-details {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid #f0f0f0;
+      animation: slideDown 0.2s ease;
+    }
+    
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
     .vp-category-description {
       color: #666;
       font-size: 13px;
       line-height: 1.5;
+      margin: 0 0 12px 0;
+    }
+    
+    .vp-category-services {
+      margin-top: 12px;
+    }
+    
+    .vp-category-services h4 {
+      font-size: 13px;
+      font-weight: 600;
+      color: #333;
+      margin: 0 0 8px 0;
+    }
+    
+    .vp-category-cookies {
+      list-style: none;
+      padding: 0;
       margin: 0;
+    }
+    
+    .vp-category-cookies li {
+      padding: 6px 0;
+      font-size: 12px;
+      color: #666;
+      border-bottom: 1px solid #f5f5f5;
+    }
+    
+    .vp-category-cookies li:last-child {
+      border-bottom: none;
     }
     
     /* Toggle Switch */
@@ -964,6 +1049,30 @@ function generatePolicyModalCss(): string {
       /* GPU acceleration for backdrop */
       will-change: opacity;
       transform: translateZ(0);
+    }
+    
+    /* Settings link styling within policy content */
+    .vp-settings-link {
+      background: none;
+      border: none;
+      color: #0066cc;
+      text-decoration: underline;
+      cursor: pointer;
+      padding: 0;
+      font-size: inherit;
+      font-family: inherit;
+      line-height: inherit;
+      transition: color 0.2s ease;
+    }
+    
+    .vp-settings-link:hover {
+      color: #004499;
+    }
+    
+    .vp-settings-link:focus {
+      outline: 2px solid #000;
+      outline-offset: 2px;
+      border-radius: 2px;
     }
     
     /* Policy content styling */

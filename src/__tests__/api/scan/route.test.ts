@@ -36,6 +36,10 @@ jest.mock('@/utils/response', () => ({
     json: () => Promise.resolve({ error: 'Validation Error', message }),
     status: 400
   })),
+  createNotFoundResponse: jest.fn((message) => ({
+    json: () => Promise.resolve({ error: 'Not Found', message }),
+    status: 404
+  })),
   createAuthErrorResponse: jest.fn((message) => ({
     json: () => Promise.resolve({ error: 'Authentication Error', message }),
     status: 401
@@ -53,6 +57,7 @@ jest.mock('@/utils/response', () => ({
 describe('/api/scan', () => {
   const mockExtractApiToken = require('@/utils/auth').extractApiToken
   const mockValidateApiToken = require('@/utils/auth').validateApiToken
+  const mockSitesDB = require('@/lib/database').SitesDB
   const mockClientScansDB = require('@/lib/database').ClientScansDB
   const mockProcessClientScan = require('@/lib/scan-processor').processClientScan
   const mockValidateRequest = require('@/lib/validation').validateRequest
@@ -89,17 +94,13 @@ describe('/api/scan', () => {
       scan_timestamp: '2024-01-01T12:00:00.000Z'
     }
 
-    it('should successfully process client scan', async () => {
-      mockExtractApiToken.mockReturnValue('valid-api-token-12345678901234567890123456789012')
-      mockValidateApiToken.mockResolvedValue({
-        valid: true,
-        site: mockSite
-      })
-
+    it('should successfully process client scan without authentication', async () => {
       mockValidateRequest.mockReturnValue({
         success: true,
         data: validScanData
       })
+
+      mockSitesDB.getById.mockResolvedValue(mockSite)
 
       const scanRecord = {
         id: 'scan-id-123',
@@ -121,16 +122,12 @@ describe('/api/scan', () => {
 
       const request = new NextRequest('http://localhost:3000/api/scan', {
         method: 'POST',
-        headers: {
-          'Authorization': 'Bearer valid-api-token-12345678901234567890123456789012'
-        },
         body: JSON.stringify(validScanData)
       })
 
       const response = await POST(request)
 
-      expect(mockExtractApiToken).toHaveBeenCalledWith(request)
-      expect(mockValidateApiToken).toHaveBeenCalledWith('valid-api-token-12345678901234567890123456789012')
+      expect(mockSitesDB.getById).toHaveBeenCalledWith(validScanData.site_id)
       expect(mockClientScansDB.create).toHaveBeenCalledWith({
         site_id: validScanData.site_id,
         detected_scripts: validScanData.detected_scripts,
@@ -152,16 +149,12 @@ describe('/api/scan', () => {
     })
 
     it('should handle scan processing failure gracefully', async () => {
-      mockExtractApiToken.mockReturnValue('valid-api-token-12345678901234567890123456789012')
-      mockValidateApiToken.mockResolvedValue({
-        valid: true,
-        site: mockSite
-      })
-
       mockValidateRequest.mockReturnValue({
         success: true,
         data: validScanData
       })
+
+      mockSitesDB.getById.mockResolvedValue(mockSite)
 
       const scanRecord = {
         id: 'scan-id-123',
@@ -174,9 +167,6 @@ describe('/api/scan', () => {
 
       const request = new NextRequest('http://localhost:3000/api/scan', {
         method: 'POST',
-        headers: {
-          'Authorization': 'Bearer valid-api-token-12345678901234567890123456789012'
-        },
         body: JSON.stringify(validScanData)
       })
 
@@ -190,8 +180,13 @@ describe('/api/scan', () => {
       }, 201)
     })
 
-    it('should return auth error when no token provided', async () => {
-      mockExtractApiToken.mockReturnValue(null)
+    it('should return not found error when site does not exist', async () => {
+      mockValidateRequest.mockReturnValue({
+        success: true,
+        data: validScanData
+      })
+
+      mockSitesDB.getById.mockResolvedValue(null)
 
       const request = new NextRequest('http://localhost:3000/api/scan', {
         method: 'POST',
@@ -200,36 +195,11 @@ describe('/api/scan', () => {
 
       const response = await POST(request)
 
-      expect(require('@/utils/response').createAuthErrorResponse).toHaveBeenCalledWith('API token is required')
-    })
-
-    it('should return auth error for invalid token', async () => {
-      mockExtractApiToken.mockReturnValue('invalid-token')
-      mockValidateApiToken.mockResolvedValue({
-        valid: false,
-        error: 'Invalid token'
-      })
-
-      const request = new NextRequest('http://localhost:3000/api/scan', {
-        method: 'POST',
-        headers: {
-          'Authorization': 'Bearer invalid-token'
-        },
-        body: JSON.stringify(validScanData)
-      })
-
-      const response = await POST(request)
-
-      expect(require('@/utils/response').createAuthErrorResponse).toHaveBeenCalledWith('Invalid token')
+      expect(mockSitesDB.getById).toHaveBeenCalledWith(validScanData.site_id)
+      expect(require('@/utils/response').createNotFoundResponse).toHaveBeenCalledWith('Site not found')
     })
 
     it('should return validation error for invalid data', async () => {
-      mockExtractApiToken.mockReturnValue('valid-api-token-12345678901234567890123456789012')
-      mockValidateApiToken.mockResolvedValue({
-        valid: true,
-        site: mockSite
-      })
-
       mockValidateRequest.mockReturnValue({
         success: false,
         error: 'Invalid scan data format'
@@ -237,45 +207,12 @@ describe('/api/scan', () => {
 
       const request = new NextRequest('http://localhost:3000/api/scan', {
         method: 'POST',
-        headers: {
-          'Authorization': 'Bearer valid-api-token-12345678901234567890123456789012'
-        },
         body: JSON.stringify({ invalid: 'data' })
       })
 
       const response = await POST(request)
 
       expect(require('@/utils/response').createValidationErrorResponse).toHaveBeenCalledWith('Invalid scan data format')
-    })
-
-    it('should return auth error when site_id does not match authenticated site', async () => {
-      mockExtractApiToken.mockReturnValue('valid-api-token-12345678901234567890123456789012')
-      mockValidateApiToken.mockResolvedValue({
-        valid: true,
-        site: mockSite
-      })
-
-      const mismatchedScanData = {
-        ...validScanData,
-        site_id: 'different-site-id-1234-5678-9012-123456789012'
-      }
-
-      mockValidateRequest.mockReturnValue({
-        success: true,
-        data: mismatchedScanData
-      })
-
-      const request = new NextRequest('http://localhost:3000/api/scan', {
-        method: 'POST',
-        headers: {
-          'Authorization': 'Bearer valid-api-token-12345678901234567890123456789012'
-        },
-        body: JSON.stringify(mismatchedScanData)
-      })
-
-      const response = await POST(request)
-
-      expect(require('@/utils/response').createAuthErrorResponse).toHaveBeenCalledWith('Site ID does not match authenticated site')
     })
   })
 

@@ -6,15 +6,27 @@
 (function() {
   'use strict';
   
-  const STORAGE_KEY = 'vision-privacy-consent';
   const BUTTON_ID = 'vision-privacy-floating-btn';
+  
+  /**
+   * Get the storage key for the current site
+   */
+  function getStorageKey() {
+    // Try to get site ID from global variable
+    if (window.VP_SITE_ID) {
+      return `vp_consent_${window.VP_SITE_ID}`;
+    }
+    // Fallback to generic key
+    return 'vision-privacy-consent';
+  }
   
   /**
    * Check if user has made a consent choice
    */
   function hasConsent() {
     try {
-      return localStorage.getItem(STORAGE_KEY) !== null;
+      const storageKey = getStorageKey();
+      return localStorage.getItem(storageKey) !== null;
     } catch (e) {
       return false;
     }
@@ -24,8 +36,23 @@
    * Check if banner is currently visible
    */
   function isBannerVisible() {
-    const banner = document.querySelector('.vision-privacy-banner');
-    return banner && banner.style.display !== 'none';
+    // Check for various banner selectors
+    const bannerSelectors = [
+      '.vision-privacy-banner',
+      '#vp-banner',
+      '[id^="vp-banner"]',
+      '.vp-banner'
+    ];
+    
+    for (const selector of bannerSelectors) {
+      const banner = document.querySelector(selector);
+      if (banner && banner.offsetParent !== null) {
+        // Element is visible (has layout)
+        return true;
+      }
+    }
+    
+    return false;
   }
   
   /**
@@ -133,33 +160,32 @@
       createFloatingButton();
     }
     
-    // Watch for banner visibility changes
-    const observer = new MutationObserver(updateButtonVisibility);
+    // Watch for banner visibility changes and DOM mutations
+    const observer = new MutationObserver(function(mutations) {
+      updateButtonVisibility();
+    });
     
     // Start observing when DOM is ready
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', function() {
-        const banner = document.querySelector('.vision-privacy-banner');
-        if (banner) {
-          observer.observe(banner, {
-            attributes: true,
-            attributeFilter: ['style']
-          });
-        }
+    const startObserving = function() {
+      // Observe the entire body for banner additions/removals
+      observer.observe(document.body, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ['style', 'class']
       });
+    };
+    
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', startObserving);
     } else {
-      const banner = document.querySelector('.vision-privacy-banner');
-      if (banner) {
-        observer.observe(banner, {
-          attributes: true,
-          attributeFilter: ['style']
-        });
-      }
+      startObserving();
     }
     
     // Listen for consent changes
     window.addEventListener('storage', function(e) {
-      if (e.key === STORAGE_KEY) {
+      const storageKey = getStorageKey();
+      if (e.key === storageKey) {
         if (e.newValue) {
           createFloatingButton();
         } else {
@@ -175,6 +201,19 @@
     
     window.addEventListener('visionPrivacyConsentCleared', function() {
       removeFloatingButton();
+    });
+    
+    // Listen for widget events (new event names)
+    window.addEventListener('vp:consent_saved', function() {
+      createFloatingButton();
+    });
+    
+    window.addEventListener('vp:banner_shown', function() {
+      updateButtonVisibility();
+    });
+    
+    window.addEventListener('vp:banner_hidden', function() {
+      updateButtonVisibility();
     });
   }
   

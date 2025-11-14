@@ -14,19 +14,6 @@ import { processClientScan } from '@/lib/scan-processor'
 
 export async function POST(request: NextRequest) {
   try {
-    // Extract and validate API token
-    const token = extractApiToken(request)
-    if (!token) {
-      return createAuthErrorResponse('API token is required')
-    }
-
-    const tokenValidation = await validateApiToken(token)
-    if (!tokenValidation.valid) {
-      return createAuthErrorResponse(tokenValidation.error)
-    }
-
-    const site = tokenValidation.site!
-
     const body = await request.json()
     
     // Validate request data
@@ -37,9 +24,10 @@ export async function POST(request: NextRequest) {
     
     const { site_id, detected_scripts, detected_cookies, scan_timestamp } = validation.data
     
-    // Verify the site_id matches the authenticated site
-    if (site_id !== site.id) {
-      return createAuthErrorResponse('Site ID does not match authenticated site')
+    // Validate that the site exists in the database
+    const site = await SitesDB.getById(site_id)
+    if (!site) {
+      return createNotFoundResponse('Site not found')
     }
     
     // Create client scan record

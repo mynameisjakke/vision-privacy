@@ -110,6 +110,12 @@ export interface Site {
   installed_plugins: string[];
   detected_forms: FormData[];
   status: 'active' | 'inactive' | 'suspended';
+  company_name?: string;
+  contact_email?: string;
+  org_number?: string;
+  company_address?: string;
+  form_plugin?: string;
+  ecommerce_plugin?: string;
   created_at: string;
   updated_at: string;
 }

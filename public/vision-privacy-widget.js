@@ -386,19 +386,19 @@
         <div id="vp-settings-modal" class="vp-modal">
           <div class="vp-modal-content">
             <div class="vp-modal-header">
-              <h3>Cookie Settings</h3>
+              <h3>Cookie-inställningar</h3>
               <button id="vp-close-settings" class="vp-close">&times;</button>
             </div>
             <div class="vp-modal-body">
-              <p>Manage your cookie preferences below. Essential cookies cannot be disabled as they are necessary for the website to function properly.</p>
+              <p>Hantera dina cookie-preferenser nedan. Nödvändiga cookies kan inte inaktiveras eftersom de krävs för att webbplatsen ska fungera korrekt.</p>
               <div id="vp-cookie-categories">
                 ${this.generateCategoryToggles()}
               </div>
             </div>
             <div class="vp-modal-footer">
               <div class="vp-modal-footer-actions">
-                <button id="vp-save-settings" class="vp-btn vp-btn-primary">Save Settings</button>
-                <button id="vp-cancel-settings" class="vp-btn vp-btn-secondary">Cancel</button>
+                <button id="vp-save-settings" class="vp-btn vp-btn-primary">Spara inställningar</button>
+                <button id="vp-cancel-settings" class="vp-btn vp-btn-secondary">Avbryt</button>
               </div>
               <div class="vp-branding">
                 <a href="https://visionmedia.io" target="_blank" rel="noopener noreferrer">Drivs av Vision Media</a>
@@ -416,10 +416,19 @@
      */
     generateCategoryToggles() {
       if (!this.config || !this.config.cookie_categories) {
-        return '<p>No cookie categories available</p>';
+        return '<p>Inga cookie-kategorier tillgängliga</p>';
       }
 
       const currentConsent = this.consent ? this.consent.consent_categories : [];
+      
+      // Swedish category name mapping
+      const categoryNameMap = {
+        'essential': 'Nödvändiga',
+        'functional': 'Funktionella',
+        'analytics': 'Analytiska',
+        'marketing': 'Marknadsföring',
+        'advertising': 'Marknadsföring'
+      };
       
       return this.config.cookie_categories
         .sort((a, b) => a.sort_order - b.sort_order)
@@ -427,14 +436,24 @@
           const isChecked = currentConsent.includes(category.id);
           const isDisabled = category.is_essential;
           
+          // Use name_sv if available, otherwise map from English, fallback to original name
+          const categoryName = category.name_sv || categoryNameMap[category.id] || category.name;
+          const categoryDescription = category.description_sv || category.description;
+          
+          // Get cookies for this category from last scan
+          const categoryServices = this.getCategoryServices(category.id);
+          
           return `
             <div class="vp-category" data-category-id="${category.id}">
-              <div class="vp-category-header">
+              <div class="vp-category-header" role="button" aria-expanded="false" tabindex="0">
                 <div class="vp-category-info">
-                  <div class="vp-category-name">${this.escapeHtml(category.name)}</div>
-                  ${category.is_essential ? '<span class="vp-essential-badge">Essential</span>' : ''}
+                  <div class="vp-category-name">
+                    ${this.escapeHtml(categoryName)}
+                    ${category.is_essential ? '<span class="vp-essential-badge">Nödvändig</span>' : ''}
+                    <span class="vp-expand-icon" aria-hidden="true">▼</span>
+                  </div>
                 </div>
-                <label class="vp-toggle">
+                <label class="vp-toggle" onclick="event.stopPropagation()">
                   <input type="checkbox" 
                          ${isChecked ? 'checked' : ''} 
                          ${isDisabled ? 'disabled' : ''}
@@ -442,10 +461,69 @@
                   <span class="vp-slider"></span>
                 </label>
               </div>
-              <div class="vp-category-description">${this.escapeHtml(category.description)}</div>
+              <div class="vp-category-details" style="display: none;">
+                <p class="vp-category-description">${this.escapeHtml(categoryDescription)}</p>
+                ${categoryServices.length > 0 ? `
+                  <div class="vp-category-services">
+                    <h4>Upptäckta tjänster och cookies:</h4>
+                    <ul class="vp-category-cookies">
+                      ${categoryServices.map(service => `<li>${this.escapeHtml(service)}</li>`).join('')}
+                    </ul>
+                  </div>
+                ` : ''}
+              </div>
             </div>
           `;
         }).join('');
+    }
+
+    /**
+     * Get services/cookies for a specific category
+     */
+    getCategoryServices(categoryId) {
+      const services = [];
+      const lastScan = this.getLastScanData();
+      
+      if (!lastScan) {
+        return services;
+      }
+
+      // Map category IDs to their variations
+      const categoryMap = {
+        'essential': ['essential'],
+        'functional': ['functional'],
+        'analytics': ['analytics'],
+        'marketing': ['advertising', 'marketing'],
+        'advertising': ['advertising', 'marketing']
+      };
+
+      const matchCategories = categoryMap[categoryId] || [categoryId];
+
+      // Add cookies from this category
+      if (lastScan.detected_cookies) {
+        lastScan.detected_cookies.forEach(cookie => {
+          if (matchCategories.includes(cookie.category)) {
+            services.push(cookie.name);
+          }
+        });
+      }
+
+      // Add scripts from this category
+      if (lastScan.detected_scripts) {
+        lastScan.detected_scripts.forEach(script => {
+          if (matchCategories.includes(script.type)) {
+            try {
+              const url = new URL(script.src);
+              services.push(url.hostname);
+            } catch (e) {
+              // Invalid URL, skip
+            }
+          }
+        });
+      }
+
+      // Remove duplicates and return
+      return [...new Set(services)];
     }
 
     /**
@@ -487,6 +565,71 @@
         }
       };
       document.addEventListener('keydown', escapeHandler);
+
+      // Accordion functionality for category headers
+      this.attachAccordionEvents();
+    }
+
+    /**
+     * Attach accordion event listeners to category headers
+     */
+    attachAccordionEvents() {
+      if (!this.settingsModal) return;
+
+      const categoryHeaders = this.settingsModal.querySelectorAll('.vp-category-header');
+      
+      categoryHeaders.forEach(header => {
+        // Click event
+        header.addEventListener('click', (e) => {
+          // Don't toggle if clicking on the toggle switch
+          if (e.target.closest('.vp-toggle')) {
+            return;
+          }
+          
+          this.toggleCategoryAccordion(header);
+        });
+
+        // Keyboard support (Enter and Space)
+        header.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            
+            // Don't toggle if focus is on the toggle switch
+            if (e.target.closest('.vp-toggle')) {
+              return;
+            }
+            
+            this.toggleCategoryAccordion(header);
+          }
+        });
+      });
+    }
+
+    /**
+     * Toggle accordion state for a category
+     */
+    toggleCategoryAccordion(header) {
+      const category = header.closest('.vp-category');
+      if (!category) return;
+
+      const details = category.querySelector('.vp-category-details');
+      const icon = header.querySelector('.vp-expand-icon');
+      
+      if (!details) return;
+
+      const isExpanded = header.getAttribute('aria-expanded') === 'true';
+      
+      // Toggle aria-expanded attribute
+      header.setAttribute('aria-expanded', !isExpanded);
+      
+      // Toggle details visibility
+      if (isExpanded) {
+        details.style.display = 'none';
+        if (icon) icon.textContent = '▼';
+      } else {
+        details.style.display = 'block';
+        if (icon) icon.textContent = '▲';
+      }
     }
 
     /**
@@ -547,13 +690,49 @@
           expires_at: new Date(Date.now() + (365 * 24 * 60 * 60 * 1000)).toISOString() // 1 year
         };
         
+        // Log consent data structure when saved
+        console.log('[VP] Consent saved:', {
+          key: this.CONSENT_KEY,
+          categories: categories,
+          expires_at: localConsent.expires_at,
+          timestamp: localConsent.timestamp,
+          site_id: this.siteId
+        });
+        
         localStorage.setItem(this.CONSENT_KEY, JSON.stringify(localConsent));
         this.consent = localConsent;
+
+        // Verify consent in storage - read back from localStorage after save
+        const verified = localStorage.getItem(this.CONSENT_KEY);
+        if (verified) {
+          try {
+            const parsedConsent = JSON.parse(verified);
+            const isValid = parsedConsent.consent_categories && 
+                           parsedConsent.expires_at && 
+                           parsedConsent.site_id === this.siteId;
+            
+            console.log('[VP] Consent verified in storage:', {
+              success: true,
+              valid: isValid,
+              categories_match: JSON.stringify(parsedConsent.consent_categories) === JSON.stringify(categories),
+              expires_at: parsedConsent.expires_at
+            });
+          } catch (parseError) {
+            console.error('[VP] Consent verification failed - invalid JSON:', parseError);
+          }
+        } else {
+          console.error('[VP] Consent verification failed - not found in localStorage');
+        }
 
         // Enforce consent immediately
         this.enforceConsent();
         
         this.dispatchEvent('vp:consent_saved', { categories });
+        
+        // Show floating settings button after consent is saved
+        if (window.VisionPrivacyFloatingButton && typeof window.VisionPrivacyFloatingButton.show === 'function') {
+          window.VisionPrivacyFloatingButton.show();
+        }
         
       } catch (error) {
         this.handleError('Failed to save consent', error);
@@ -1195,24 +1374,46 @@
       const cookies = [];
       const cookieString = document.cookie;
       
-      if (!cookieString) return cookies;
-      
-      const cookiePairs = cookieString.split(';');
-      
-      cookiePairs.forEach(pair => {
-        const [name, value] = pair.trim().split('=');
-        if (name) {
-          const cookieInfo = {
-            name: name.trim(),
+      // Scan document.cookie for HTTP cookies
+      if (cookieString) {
+        const cookiePairs = cookieString.split(';');
+        
+        cookiePairs.forEach(pair => {
+          const [name, value] = pair.trim().split('=');
+          if (name) {
+            const cookieInfo = {
+              name: name.trim(),
+              domain: window.location.hostname,
+              category: this.categorizeCookie(name.trim()),
+              detected_at: new Date().toISOString(),
+              has_value: !!value,
+              storage_type: 'cookie'
+            };
+            
+            cookies.push(cookieInfo);
+          }
+        });
+      }
+
+      // Always include Vision Privacy consent cookie from localStorage
+      const consentKey = this.CONSENT_KEY; // vp_consent_{siteId}
+      try {
+        const consentData = localStorage.getItem(consentKey);
+        if (consentData) {
+          const vpConsentCookie = {
+            name: consentKey,
             domain: window.location.hostname,
-            category: this.categorizeCookie(name.trim()),
+            category: 'essential',
             detected_at: new Date().toISOString(),
-            has_value: !!value
+            has_value: true,
+            storage_type: 'localStorage'
           };
           
-          cookies.push(cookieInfo);
+          cookies.push(vpConsentCookie);
         }
-      });
+      } catch (error) {
+        console.warn('Failed to check localStorage for VP consent cookie:', error);
+      }
 
       return cookies;
     }

@@ -257,23 +257,22 @@ ${rows.join('\n')}
     const formPluginName = this.detectFormPlugin(site.installed_plugins || [])
     const ecomPluginName = this.detectEcommercePlugin(site.installed_plugins || [])
 
-    // Build variables object
-    // Note: Site type doesn't have company fields yet, so we use empty strings as fallback
+    // Build variables object with site metadata
     const variables: TemplateVariables = {
       DOMAIN_NAME: site.domain || '',
-      COMPANY_NAME: (site as any).company_name || '',
-      COMPANY_NAME_OR_DOMAIN: (site as any).company_name || site.domain || '',
-      ORG_NUMBER: (site as any).org_number || '',
-      COMPANY_ADDRESS: (site as any).company_address || '',
-      CONTACT_EMAIL: (site as any).contact_email || '',
+      COMPANY_NAME: site.company_name || '',
+      COMPANY_NAME_OR_DOMAIN: site.company_name || site.domain || '',
+      ORG_NUMBER: site.org_number || '',
+      COMPANY_ADDRESS: site.company_address || '',
+      CONTACT_EMAIL: site.contact_email || '',
       LAST_UPDATED_DATE: this.formatDate(new Date()),
       ESSENTIAL_COOKIES_LIST: this.generateCookieList(detectedCookies, 'essential'),
       FUNCTIONAL_COOKIES_LIST: this.generateCookieList(detectedCookies, 'functional'),
       ANALYTICS_COOKIES_LIST: this.generateCookieList(detectedCookies, 'analytics'),
       ADVERTISING_COOKIES_LIST: this.generateCookieList(detectedCookies, 'advertising'),
       COOKIE_DETAILS_TABLE: this.generateCookieTable(detectedCookies),
-      FORM_PLUGIN_NAME: formPluginName,
-      ECOM_PLUGIN_NAME: ecomPluginName
+      FORM_PLUGIN_NAME: site.form_plugin || formPluginName,
+      ECOM_PLUGIN_NAME: site.ecommerce_plugin || ecomPluginName
     }
 
     return variables

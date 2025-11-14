@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server'
 import { createSuccessResponse, createNotFoundResponse, createValidationErrorResponse, createMethodNotAllowedResponse } from '@/utils/response'
 import { validateRequest, widgetConfigSchema } from '@/lib/validation'
 import { SitesDB, PolicyTemplatesDB, ClientScansDB } from '@/lib/database'
+import { PolicyTemplateEngine } from '@/lib/policy-template'
 
 export async function GET(
   request: NextRequest,
@@ -33,19 +34,17 @@ export async function GET(
     }
     
     // Get appropriate template based on type
-    // Note: 'policy' template type is used for both cookie and privacy policies
-    // The type parameter determines which default template to use if no custom template exists
-    const policyTemplate = await PolicyTemplatesDB.findActive('policy')
+    const templateType = type === 'cookie' ? 'cookie_notice' : 'policy'
+    const policyTemplate = await PolicyTemplatesDB.findActive(templateType)
     
-    // Get latest client scan data for this site
-    const latestScan = await ClientScansDB.getLatestBySiteId(site_id)
+    // If no template found, use default
+    const templateContent = policyTemplate?.content || getDefaultPolicyTemplate(type)
     
-    // Generate dynamic policy content
-    const policyContent = generatePolicyContent(
-      policyTemplate?.content || getDefaultPolicyTemplate(type),
-      site,
-      latestScan
-    )
+    // Get site variables for template replacement
+    const variables = await PolicyTemplateEngine.getSiteVariables(site_id)
+    
+    // Generate dynamic policy content with template variable replacement
+    const policyContent = PolicyTemplateEngine.renderTemplate(templateContent, variables)
     
     // Return JSON response for modal display
     if (format === 'json') {
@@ -104,195 +103,144 @@ export async function GET(
   }
 }
 
-function generatePolicyContent(template: string, site: any, latestScan: any): string {
-  const siteDomain = new URL(site.domain).hostname
-  const currentDate = new Date().toLocaleDateString()
-  
-  // Extract detected services from scan data
-  const detectedServices = latestScan?.detected_scripts || []
-  const detectedCookies = latestScan?.detected_cookies || []
-  
-  // Generate services list
-  const servicesHtml = generateServicesSection(detectedServices, detectedCookies)
-  
-  return template
-    .replace(/{{SITE_DOMAIN}}/g, siteDomain)
-    .replace(/{{SITE_NAME}}/g, siteDomain)
-    .replace(/{{CURRENT_DATE}}/g, currentDate)
-    .replace(/{{LAST_UPDATED}}/g, currentDate)
-    .replace(/{{DETECTED_SERVICES}}/g, servicesHtml)
-    .replace(/{{CONTACT_EMAIL}}/g, `privacy@${siteDomain}`)
-}
 
-function generateServicesSection(scripts: any[], cookies: any[]): string {
-  if (!scripts.length && !cookies.length) {
-    return '<p>No third-party services detected on this website.</p>'
-  }
-  
-  let html = '<div class="detected-services">'
-  html += '<h3>Third-Party Services Detected</h3>'
-  
-  if (scripts.length > 0) {
-    html += '<h4>Analytics and Tracking Services:</h4>'
-    html += '<ul class="service-list">'
-    
-    const servicesByType = scripts.reduce((acc, script) => {
-      if (!acc[script.type]) acc[script.type] = []
-      acc[script.type].push(script)
-      return acc
-    }, {})
-    
-    Object.entries(servicesByType).forEach(([type, services]) => {
-      const serviceList = services as any[]
-      html += `<li class="service-item"><strong>${capitalizeFirst(type)}:</strong> `
-      const domains = [...new Set(serviceList.map(s => s.domain))]
-      html += domains.join(', ')
-      html += '</li>'
-    })
-    
-    html += '</ul>'
-  }
-  
-  if (cookies.length > 0) {
-    html += '<h4>Cookies Used:</h4>'
-    html += '<ul class="service-list">'
-    
-    const cookiesByCategory = cookies.reduce((acc, cookie) => {
-      if (!acc[cookie.category]) acc[cookie.category] = []
-      acc[cookie.category].push(cookie)
-      return acc
-    }, {})
-    
-    Object.entries(cookiesByCategory).forEach(([category, cookieList]) => {
-      const cookies = cookieList as any[]
-      html += `<li class="service-item"><strong>${capitalizeFirst(category)} Cookies:</strong> `
-      html += `${cookies.length} cookie(s) from ${[...new Set(cookies.map(c => c.domain))].join(', ')}`
-      html += '</li>'
-    })
-    
-    html += '</ul>'
-  }
-  
-  html += '</div>'
-  return html
-}
-
-function capitalizeFirst(str: string): string {
-  return str.charAt(0).toUpperCase() + str.slice(1)
-}
 
 function getDefaultPolicyTemplate(type: string = 'privacy'): string {
   if (type === 'cookie') {
     return `
-      <h1>Cookie Policy for {{SITE_NAME}}</h1>
-      <p class="last-updated">Last updated: {{LAST_UPDATED}}</p>
+      <h1>Cookiepolicy för {{COMPANY_NAME_OR_DOMAIN}}</h1>
+      <p class="last-updated">Senast uppdaterad: {{LAST_UPDATED_DATE}}</p>
       
       <div class="section">
-        <h2>1. What Are Cookies</h2>
-        <p>Cookies are small text files that are placed on your device when you visit {{SITE_NAME}}. They help us provide you with a better experience by remembering your preferences and understanding how you use our website.</p>
+        <h2>1. Vad är cookies?</h2>
+        <p>Cookies är små textfiler som placeras på din enhet när du besöker {{DOMAIN_NAME}}. De hjälper oss att ge dig en bättre upplevelse genom att komma ihåg dina preferenser och förstå hur du använder vår webbplats.</p>
       </div>
       
       <div class="section">
-        <h2>2. Types of Cookies We Use</h2>
-        <p>We use the following types of cookies on our website:</p>
+        <h2>2. Typer av cookies vi använder</h2>
+        <p>Vi använder följande typer av cookies på vår webbplats:</p>
         <ul>
-          <li><strong>Essential Cookies:</strong> These are necessary for the website to function properly and cannot be disabled</li>
-          <li><strong>Analytics Cookies:</strong> These help us understand how visitors interact with our website by collecting and reporting information anonymously</li>
-          <li><strong>Marketing Cookies:</strong> These are used to deliver relevant advertisements and track advertising campaign performance</li>
-          <li><strong>Functional Cookies:</strong> These enable enhanced functionality and personalization, such as remembering your preferences</li>
+          <li><strong>Nödvändiga cookies:</strong> Dessa är nödvändiga för att webbplatsen ska fungera korrekt och kan inte inaktiveras</li>
+          <li><strong>Analytiska cookies:</strong> Dessa hjälper oss att förstå hur besökare interagerar med vår webbplats genom att samla in och rapportera information anonymt</li>
+          <li><strong>Marknadsföringscookies:</strong> Dessa används för att leverera relevanta annonser och spåra annonskampanjers prestanda</li>
+          <li><strong>Funktionella cookies:</strong> Dessa möjliggör förbättrad funktionalitet och personalisering, såsom att komma ihåg dina preferenser</li>
         </ul>
       </div>
       
       <div class="section">
-        <h2>3. Cookies Currently in Use</h2>
-        <p>Below are the cookies and third-party services currently detected on our website:</p>
-        {{DETECTED_SERVICES}}
+        <h2>3. Cookies som för närvarande används</h2>
+        <p>Nedan finns de cookies som för närvarande upptäckts på vår webbplats:</p>
+        
+        <h3>Nödvändiga cookies</h3>
+        {{ESSENTIAL_COOKIES_LIST}}
+        
+        <h3>Funktionella cookies</h3>
+        {{FUNCTIONAL_COOKIES_LIST}}
+        
+        <h3>Analytiska cookies</h3>
+        {{ANALYTICS_COOKIES_LIST}}
+        
+        <h3>Marknadsföringscookies</h3>
+        {{ADVERTISING_COOKIES_LIST}}
+        
+        <h3>Detaljerad cookietabell</h3>
+        {{COOKIE_DETAILS_TABLE}}
       </div>
       
       <div class="section">
-        <h2>4. Managing Your Cookie Preferences</h2>
-        <p>You can control and manage cookies in several ways:</p>
+        <h2>4. Hantera dina cookiepreferenser</h2>
+        <p>Du kan kontrollera och hantera cookies på flera sätt:</p>
         <ul>
-          <li>Use our cookie banner to accept or decline non-essential cookies</li>
-          <li>Modify your cookie preferences at any time through our cookie settings</li>
-          <li>Configure your browser settings to block or delete cookies</li>
-          <li>Use browser extensions or privacy tools to manage cookies</li>
+          <li>Använd vår cookiebanner för att acceptera eller avvisa icke-nödvändiga cookies</li>
+          <li>Ändra dina cookiepreferenser när som helst genom våra cookieinställningar</li>
+          <li>Konfigurera dina webbläsarinställningar för att blockera eller ta bort cookies</li>
+          <li>Använd webbläsartillägg eller integritetsverktyg för att hantera cookies</li>
         </ul>
-        <p>Please note that blocking certain cookies may impact your experience on our website.</p>
+        <p>Observera att blockering av vissa cookies kan påverka din upplevelse på vår webbplats.</p>
       </div>
       
       <div class="section">
-        <h2>5. Cookie Duration</h2>
-        <p>Your cookie preferences are stored for up to 12 months. After this period, you will be asked to renew your consent.</p>
+        <h2>5. Cookievaraktighet</h2>
+        <p>Dina cookiepreferenser lagras i upp till 12 månader. Efter denna period kommer du att bli ombedd att förnya ditt samtycke.</p>
       </div>
       
       <div class="section">
-        <h2>6. Contact Information</h2>
-        <p>If you have any questions about our use of cookies, please contact us at:</p>
-        <p>Email: {{CONTACT_EMAIL}}</p>
-        <p>Website: {{SITE_DOMAIN}}</p>
+        <h2>6. Kontaktinformation</h2>
+        <p>Om du har några frågor om vår användning av cookies, vänligen kontakta oss:</p>
+        <p><strong>Företag:</strong> {{COMPANY_NAME_OR_DOMAIN}}</p>
+        <p><strong>E-post:</strong> {{CONTACT_EMAIL}}</p>
+        <p><strong>Webbplats:</strong> {{DOMAIN_NAME}}</p>
       </div>
       
       <div class="section">
-        <h2>7. Updates to This Policy</h2>
-        <p>We may update this Cookie Policy from time to time to reflect changes in our practices or for legal reasons. Any changes will be posted on this page with an updated revision date.</p>
+        <h2>7. Uppdateringar av denna policy</h2>
+        <p>Vi kan uppdatera denna cookiepolicy från tid till annan för att återspegla ändringar i våra metoder eller av juridiska skäl. Eventuella ändringar kommer att publiceras på denna sida med ett uppdaterat revisionsdatum.</p>
       </div>
     `
   }
   
   // Default privacy policy template
   return `
-    <h1>Privacy Policy for {{SITE_NAME}}</h1>
-    <p class="last-updated">Last updated: {{LAST_UPDATED}}</p>
+    <h1>Integritetspolicy för {{COMPANY_NAME_OR_DOMAIN}}</h1>
+    <p class="last-updated">Senast uppdaterad: {{LAST_UPDATED_DATE}}</p>
     
     <div class="section">
-      <h2>1. Information We Collect</h2>
-      <p>When you visit {{SITE_NAME}}, we may collect certain information about your device and your interaction with our website through cookies and similar technologies.</p>
+      <h2>1. Information vi samlar in</h2>
+      <p>När du besöker {{DOMAIN_NAME}} kan vi samla in viss information om din enhet och din interaktion med vår webbplats genom cookies och liknande teknologier.</p>
     </div>
     
     <div class="section">
-      <h2>2. How We Use Cookies</h2>
-      <p>We use cookies and similar tracking technologies to track activity on our website and store certain information. The types of cookies we use include:</p>
+      <h2>2. Hur vi använder cookies</h2>
+      <p>Vi använder cookies och liknande spårningsteknologier för att spåra aktivitet på vår webbplats och lagra viss information. De typer av cookies vi använder inkluderar:</p>
       <ul>
-        <li><strong>Essential Cookies:</strong> These are necessary for the website to function properly</li>
-        <li><strong>Analytics Cookies:</strong> These help us understand how visitors interact with our website</li>
-        <li><strong>Marketing Cookies:</strong> These are used to deliver relevant advertisements</li>
-        <li><strong>Functional Cookies:</strong> These enable enhanced functionality and personalization</li>
+        <li><strong>Nödvändiga cookies:</strong> Dessa är nödvändiga för att webbplatsen ska fungera korrekt</li>
+        <li><strong>Analytiska cookies:</strong> Dessa hjälper oss att förstå hur besökare interagerar med vår webbplats</li>
+        <li><strong>Marknadsföringscookies:</strong> Dessa används för att leverera relevanta annonser</li>
+        <li><strong>Funktionella cookies:</strong> Dessa möjliggör förbättrad funktionalitet och personalisering</li>
       </ul>
     </div>
     
     <div class="section">
-      <h2>3. Third-Party Services</h2>
-      <p>Our website may use third-party services that collect, monitor and analyze user behavior. Below are the services currently detected on our website:</p>
-      {{DETECTED_SERVICES}}
+      <h2>3. Cookies som används</h2>
+      <p>Nedan finns de cookies som för närvarande upptäckts på vår webbplats:</p>
+      {{COOKIE_DETAILS_TABLE}}
     </div>
     
     <div class="section">
-      <h2>4. Your Rights and Choices</h2>
-      <p>You have the right to:</p>
+      <h2>4. Tredjepartstjänster</h2>
+      <p>Vår webbplats kan använda tredjepartstjänster som samlar in, övervakar och analyserar användarbeteende.</p>
+      <p>Vi använder {{FORM_PLUGIN_NAME}} för kontaktformulär och {{ECOM_PLUGIN_NAME}} för e-handel.</p>
+    </div>
+    
+    <div class="section">
+      <h2>5. Dina rättigheter och val</h2>
+      <p>Du har rätt att:</p>
       <ul>
-        <li>Accept or decline cookies through our cookie banner</li>
-        <li>Modify your cookie preferences at any time</li>
-        <li>Request information about the data we collect</li>
-        <li>Request deletion of your personal data</li>
+        <li>Acceptera eller avvisa cookies genom vår cookiebanner</li>
+        <li>Ändra dina cookiepreferenser när som helst</li>
+        <li>Begära information om de data vi samlar in</li>
+        <li>Begära radering av dina personuppgifter</li>
       </ul>
     </div>
     
     <div class="section">
-      <h2>5. Data Retention</h2>
-      <p>We retain your cookie preferences for up to 12 months. After this period, you will be asked to renew your consent.</p>
+      <h2>6. Datalagring</h2>
+      <p>Vi behåller dina cookiepreferenser i upp till 12 månader. Efter denna period kommer du att bli ombedd att förnya ditt samtycke.</p>
     </div>
     
     <div class="section">
-      <h2>6. Contact Information</h2>
-      <p>If you have any questions about this Privacy Policy or our data practices, please contact us at:</p>
-      <p>Email: {{CONTACT_EMAIL}}</p>
-      <p>Website: {{SITE_DOMAIN}}</p>
+      <h2>7. Kontaktinformation</h2>
+      <p>Om du har några frågor om denna integritetspolicy eller våra datametoder, vänligen kontakta oss:</p>
+      <p><strong>Företag:</strong> {{COMPANY_NAME_OR_DOMAIN}}</p>
+      <p><strong>Organisationsnummer:</strong> {{ORG_NUMBER}}</p>
+      <p><strong>Adress:</strong> {{COMPANY_ADDRESS}}</p>
+      <p><strong>E-post:</strong> {{CONTACT_EMAIL}}</p>
+      <p><strong>Webbplats:</strong> {{DOMAIN_NAME}}</p>
     </div>
     
     <div class="section">
-      <h2>7. Changes to This Policy</h2>
-      <p>We may update this Privacy Policy from time to time. Any changes will be posted on this page with an updated revision date.</p>
+      <h2>8. Ändringar av denna policy</h2>
+      <p>Vi kan uppdatera denna integritetspolicy från tid till annan. Eventuella ändringar kommer att publiceras på denna sida med ett uppdaterat revisionsdatum.</p>
     </div>
   `
 }
