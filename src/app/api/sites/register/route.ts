@@ -108,7 +108,7 @@ export async function POST(request: NextRequest) {
             })),
             // Update company metadata if provided
             company_name: company_info?.company_name ? InputSanitizer.sanitizeString(company_info.company_name) : undefined,
-            contact_email: company_info?.contact_email ? InputSanitizer.sanitizeEmail(company_info.contact_email) : undefined,
+            contact_email: company_info?.contact_email ? InputSanitizer.sanitizeString(company_info.contact_email) : undefined,
             org_number: company_info?.org_number ? InputSanitizer.sanitizeString(company_info.org_number) : undefined,
             company_address: company_info?.address ? InputSanitizer.sanitizeString(company_info.address) : undefined,
             updated_at: new Date().toISOString()
@@ -201,7 +201,7 @@ export async function POST(request: NextRequest) {
         })),
         // Save company metadata if provided
         company_name: company_info?.company_name ? InputSanitizer.sanitizeString(company_info.company_name) : null,
-        contact_email: company_info?.contact_email ? InputSanitizer.sanitizeEmail(company_info.contact_email) : null,
+        contact_email: company_info?.contact_email ? InputSanitizer.sanitizeString(company_info.contact_email) : null,
         org_number: company_info?.org_number ? InputSanitizer.sanitizeString(company_info.org_number) : null,
         company_address: company_info?.address ? InputSanitizer.sanitizeString(company_info.address) : null,
         status: 'active'
