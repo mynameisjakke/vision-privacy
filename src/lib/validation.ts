@@ -13,12 +13,12 @@ export const siteRegistrationSchema = z.object({
   plugin_version: z.string().min(1, 'Plugin version is required'),
   company_info: z.object({
     company_name: z.string().optional(),
-    contact_email: z.string().email('Invalid email format').optional(),
+    contact_email: z.string().email('Invalid email format').or(z.literal('')).optional(),
     org_number: z.string().optional(),
     address: z.string().optional(),
     country: z.string().optional(),
     phone: z.string().optional(),
-    dpo_email: z.string().email('Invalid email format').optional()
+    dpo_email: z.string().email('Invalid email format').or(z.literal('')).optional()
   }).optional()
 })
 
