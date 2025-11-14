@@ -18,7 +18,9 @@ export const siteRegistrationSchema = z.object({
     address: z.string().optional(),
     country: z.string().optional(),
     phone: z.string().optional(),
-    dpo_email: z.string().email('Invalid email format').or(z.literal('')).optional()
+    dpo_email: z.string().email('Invalid email format').or(z.literal('')).optional(),
+    form_plugin: z.string().optional(),
+    ecommerce_plugin: z.string().optional()
   }).optional()
 })
 
