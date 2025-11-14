@@ -225,15 +225,24 @@ ${rows.join('\n')}
       throw new Error(`Site not found: ${siteId}`)
     }
 
-    // Fetch latest client scan to get detected cookies
-    const { data: latestScan } = await supabaseAdmin
+    // Fetch all recent scans and use the one with most cookies detected
+    const { data: recentScans } = await supabaseAdmin
       .from('client_scans')
       .select('detected_cookies')
       .eq('site_id', siteId)
       .eq('processed', true)
       .order('scan_timestamp', { ascending: false })
-      .limit(1)
-      .single()
+      .limit(10) // Get last 10 scans
+    
+    // Find the scan with the most cookies
+    let latestScan = null
+    if (recentScans && recentScans.length > 0) {
+      latestScan = recentScans.reduce((best, current) => {
+        const currentCount = Array.isArray(current.detected_cookies) ? current.detected_cookies.length : 0
+        const bestCount = Array.isArray(best.detected_cookies) ? best.detected_cookies.length : 0
+        return currentCount > bestCount ? current : best
+      }, recentScans[0])
+    }
     
     // Extract cookies from scan data and transform to our format
     const detectedCookies: DetectedCookie[] = []

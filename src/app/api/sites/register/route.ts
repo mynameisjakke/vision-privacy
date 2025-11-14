@@ -47,6 +47,10 @@ export async function POST(request: NextRequest) {
     
     const { domain, wp_version, installed_plugins, detected_forms, plugin_version, company_info } = validation.data
     
+    // Auto-detect form and ecommerce plugins from installed_plugins
+    const detectedFormPlugin = detectFormPlugin(installed_plugins || [])
+    const detectedEcomPlugin = detectEcommercePlugin(installed_plugins || [])
+    
     // Validate and sanitize domain
     const sanitizedDomain = InputSanitizer.sanitizeUrl(domain)
     if (!isValidDomain(sanitizedDomain)) {
@@ -111,6 +115,9 @@ export async function POST(request: NextRequest) {
             contact_email: company_info?.contact_email ? InputSanitizer.sanitizeString(company_info.contact_email) : undefined,
             org_number: company_info?.org_number ? InputSanitizer.sanitizeString(company_info.org_number) : undefined,
             company_address: company_info?.address ? InputSanitizer.sanitizeString(company_info.address) : undefined,
+            // Auto-detect plugins (prefer manual entry from company_info if provided)
+            form_plugin: company_info?.form_plugin || detectedFormPlugin || undefined,
+            ecommerce_plugin: company_info?.ecommerce_plugin || detectedEcomPlugin || undefined,
             updated_at: new Date().toISOString()
           })
           .eq('id', existingSiteId)
@@ -204,6 +211,9 @@ export async function POST(request: NextRequest) {
         contact_email: company_info?.contact_email ? InputSanitizer.sanitizeString(company_info.contact_email) : null,
         org_number: company_info?.org_number ? InputSanitizer.sanitizeString(company_info.org_number) : null,
         company_address: company_info?.address ? InputSanitizer.sanitizeString(company_info.address) : null,
+        // Auto-detect plugins (prefer manual entry from company_info if provided)
+        form_plugin: company_info?.form_plugin || detectedFormPlugin,
+        ecommerce_plugin: company_info?.ecommerce_plugin || detectedEcomPlugin,
         status: 'active'
       })
       .select()
@@ -267,4 +277,45 @@ export async function PUT() {
 
 export async function DELETE() {
   return createMethodNotAllowedResponse(['POST'])
+}
+
+/**
+ * Detect form plugin from installed plugins list
+ */
+function detectFormPlugin(installedPlugins: string[]): string | null {
+  const formPlugins = [
+    { name: 'Contact Form 7', pattern: /contact form 7/i },
+    { name: 'WPForms', pattern: /wpforms/i },
+    { name: 'Gravity Forms', pattern: /gravity forms/i },
+    { name: 'Ninja Forms', pattern: /ninja forms/i },
+    { name: 'Formidable Forms', pattern: /formidable/i },
+    { name: 'Caldera Forms', pattern: /caldera forms/i }
+  ]
+
+  for (const plugin of formPlugins) {
+    if (installedPlugins.some(p => plugin.pattern.test(p))) {
+      return plugin.name
+    }
+  }
+
+  return null
+}
+
+/**
+ * Detect ecommerce plugin from installed plugins list
+ */
+function detectEcommercePlugin(installedPlugins: string[]): string | null {
+  const ecomPlugins = [
+    { name: 'WooCommerce', pattern: /woocommerce/i },
+    { name: 'Easy Digital Downloads', pattern: /easy digital downloads/i },
+    { name: 'WP eCommerce', pattern: /wp ecommerce/i }
+  ]
+
+  for (const plugin of ecomPlugins) {
+    if (installedPlugins.some(p => plugin.pattern.test(p))) {
+      return plugin.name
+    }
+  }
+
+  return null
 }
