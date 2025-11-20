@@ -1279,7 +1279,6 @@ function getFloatingButtonJs(): string {
   function isBannerVisible() {
     const banner = document.querySelector('.vision-privacy-banner, .vp-banner');
     if (!banner) {
-      console.log('[VP Floating Button] No banner found in DOM');
       return false;
     }
     
@@ -1287,31 +1286,19 @@ function getFloatingButtonJs(): string {
     const computedStyle = window.getComputedStyle(banner);
     const isVisible = computedStyle.display !== 'none' && banner.offsetParent !== null;
     
-    console.log('[VP Floating Button] Banner visibility check:', {
-      found: true,
-      inlineDisplay: banner.style.display,
-      computedDisplay: computedStyle.display,
-      hasOffsetParent: banner.offsetParent !== null,
-      isVisible: isVisible
-    });
-    
     return isVisible;
   }
   
   function createFloatingButton(force) {
     // If button already exists, don't create another one
     if (document.getElementById(BUTTON_ID)) {
-      console.log('[VP Floating Button] Button already exists');
       return;
     }
     
     // Only check consent if not forced (force=true when called explicitly after consent saved)
     if (!force && !hasConsent()) {
-      console.log('[VP Floating Button] No consent found, not creating button');
       return;
     }
-    
-    console.log('[VP Floating Button] Creating floating button');
     
     const button = document.createElement('button');
     button.id = BUTTON_ID;
@@ -1337,27 +1324,15 @@ function getFloatingButtonJs(): string {
     });
     
     document.body.appendChild(button);
-    console.log('[VP Floating Button] Button added to DOM');
     updateButtonVisibility();
   }
   
   function updateButtonVisibility() {
     const button = document.getElementById(BUTTON_ID);
-    if (!button) {
-      console.log('[VP Floating Button] updateButtonVisibility: button not found');
-      return;
-    }
+    if (!button) return;
     
     const bannerVisible = isBannerVisible();
-    const newDisplay = bannerVisible ? 'none' : 'flex';
-    
-    console.log('[VP Floating Button] Updating button visibility:', {
-      bannerVisible: bannerVisible,
-      newDisplay: newDisplay,
-      currentDisplay: button.style.display
-    });
-    
-    button.style.display = newDisplay;
+    button.style.display = bannerVisible ? 'none' : 'flex';
   }
   
   function init() {
@@ -1399,7 +1374,6 @@ function getFloatingButtonJs(): string {
   
   window.VisionPrivacyFloatingButton = {
     show: function() {
-      console.log('[VP Floating Button] show() called explicitly');
       createFloatingButton(true); // Force creation when called explicitly
     },
     hide: function() {
