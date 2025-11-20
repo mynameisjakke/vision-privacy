@@ -104,6 +104,31 @@
     }
 
     /**
+     * Inject floating button JavaScript and CSS
+     */
+    injectFloatingButtonScripts(config) {
+      // Inject floating button JavaScript
+      if (config.floating_button_js) {
+        const floatingScript = document.createElement('script');
+        floatingScript.id = 'vp-floating-button-script';
+        floatingScript.textContent = config.floating_button_js;
+        if (!document.getElementById('vp-floating-button-script')) {
+          document.head.appendChild(floatingScript);
+        }
+      }
+
+      // Inject floating button CSS
+      if (config.floating_button_css) {
+        const floatingStyle = document.createElement('style');
+        floatingStyle.id = 'vp-floating-button-styles';
+        floatingStyle.textContent = config.floating_button_css;
+        if (!document.getElementById('vp-floating-button-styles')) {
+          document.head.appendChild(floatingStyle);
+        }
+      }
+    }
+
+    /**
      * Fetch widget configuration from API
      */
     async fetchConfig() {
@@ -112,6 +137,9 @@
         const cachedConfig = this.loadCachedConfig();
         if (cachedConfig && this.isCacheValid(cachedConfig)) {
           this.config = cachedConfig.data;
+          
+          // Still need to inject floating button scripts even when using cached config
+          this.injectFloatingButtonScripts(this.config);
           return;
         }
 
@@ -129,25 +157,8 @@
         const data = await response.json();
         this.config = data;
         
-        // Inject floating button JavaScript
-        if (data.floating_button_js) {
-          const floatingScript = document.createElement('script');
-          floatingScript.id = 'vp-floating-button-script';
-          floatingScript.textContent = data.floating_button_js;
-          if (!document.getElementById('vp-floating-button-script')) {
-            document.head.appendChild(floatingScript);
-          }
-        }
-
-        // Inject floating button CSS
-        if (data.floating_button_css) {
-          const floatingStyle = document.createElement('style');
-          floatingStyle.id = 'vp-floating-button-styles';
-          floatingStyle.textContent = data.floating_button_css;
-          if (!document.getElementById('vp-floating-button-styles')) {
-            document.head.appendChild(floatingStyle);
-          }
-        }
+        // Inject floating button scripts
+        this.injectFloatingButtonScripts(data);
         
         // Cache the configuration
         this.cacheConfig(data);
