@@ -107,6 +107,26 @@
         const data = await response.json();
         this.config = data;
         
+        // Inject floating button JavaScript
+        if (data.floating_button_js) {
+          const floatingScript = document.createElement('script');
+          floatingScript.id = 'vp-floating-button-script';
+          floatingScript.textContent = data.floating_button_js;
+          if (!document.getElementById('vp-floating-button-script')) {
+            document.head.appendChild(floatingScript);
+          }
+        }
+
+        // Inject floating button CSS
+        if (data.floating_button_css) {
+          const floatingStyle = document.createElement('style');
+          floatingStyle.id = 'vp-floating-button-styles';
+          floatingStyle.textContent = data.floating_button_css;
+          if (!document.getElementById('vp-floating-button-styles')) {
+            document.head.appendChild(floatingStyle);
+          }
+        }
+        
         // Cache the configuration
         this.cacheConfig(data);
         
@@ -1395,25 +1415,21 @@
         });
       }
 
-      // Always include Vision Privacy consent cookie from localStorage
+      // ALWAYS include Vision Privacy consent cookie
+      // This ensures it shows in policies even before user consents
       const consentKey = this.CONSENT_KEY; // vp_consent_{siteId}
-      try {
-        const consentData = localStorage.getItem(consentKey);
-        if (consentData) {
-          const vpConsentCookie = {
-            name: consentKey,
-            domain: window.location.hostname,
-            category: 'essential',
-            detected_at: new Date().toISOString(),
-            has_value: true,
-            storage_type: 'localStorage'
-          };
-          
-          cookies.push(vpConsentCookie);
-        }
-      } catch (error) {
-        console.warn('Failed to check localStorage for VP consent cookie:', error);
-      }
+      const vpConsentCookie = {
+        name: consentKey,
+        domain: window.location.hostname,
+        category: 'essential',
+        detected_at: new Date().toISOString(),
+        has_value: true,
+        storage_type: 'localStorage',
+        description: 'Lagrar dina cookie-preferenser för denna webbplats',
+        duration: '12 månader'
+      };
+      
+      cookies.push(vpConsentCookie);
 
       return cookies;
     }
