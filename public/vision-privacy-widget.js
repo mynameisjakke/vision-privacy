@@ -65,6 +65,11 @@
         } else {
           // Enforce existing consent preferences
           this.enforceConsent();
+          
+          // Show floating button since user already has consent
+          if (window.VisionPrivacyFloatingButton && typeof window.VisionPrivacyFloatingButton.show === 'function') {
+            window.VisionPrivacyFloatingButton.show();
+          }
         }
         
         // Setup policy modal event listeners
