@@ -1261,12 +1261,16 @@ function getFloatingButtonJs(): string {
 (function() {
   'use strict';
   
-  const STORAGE_KEY = 'vision-privacy-consent';
   const BUTTON_ID = 'vision-privacy-floating-btn';
   
   function hasConsent() {
     try {
-      return localStorage.getItem(STORAGE_KEY) !== null;
+      // Check for consent with the correct key format: vp_consent_{siteId}
+      const siteId = window.VP_SITE_ID;
+      if (!siteId) return false;
+      
+      const consentKey = 'vp_consent_' + siteId;
+      return localStorage.getItem(consentKey) !== null;
     } catch (e) {
       return false;
     }
@@ -1337,7 +1341,11 @@ function getFloatingButtonJs(): string {
     }
     
     window.addEventListener('storage', function(e) {
-      if (e.key === STORAGE_KEY) {
+      const siteId = window.VP_SITE_ID;
+      if (!siteId) return;
+      
+      const consentKey = 'vp_consent_' + siteId;
+      if (e.key === consentKey) {
         const button = document.getElementById(BUTTON_ID);
         if (e.newValue && !button) {
           createFloatingButton();
