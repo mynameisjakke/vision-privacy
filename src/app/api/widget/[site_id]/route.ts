@@ -1416,6 +1416,40 @@ function getFloatingButtonJs(): string {
         }
       }
     });
+    
+    // Watch for page navigation (AJAX/SPA navigation)
+    // Recreate button if it gets removed during page transitions
+    const bodyObserver = new MutationObserver(function() {
+      // Check if button exists and user has consent
+      if (!document.getElementById(BUTTON_ID) && hasConsent()) {
+        console.log('[VP Floating Button] Button removed during page navigation, recreating...');
+        createFloatingButton(true);
+      }
+    });
+    
+    // Observe body for child list changes (page navigation)
+    bodyObserver.observe(document.body, { 
+      childList: true, 
+      subtree: false 
+    });
+    
+    // Also listen for common page navigation events
+    window.addEventListener('popstate', function() {
+      console.log('[VP Floating Button] popstate event detected');
+      setTimeout(function() {
+        if (!document.getElementById(BUTTON_ID) && hasConsent()) {
+          createFloatingButton(true);
+        }
+      }, 100);
+    });
+    
+    // Listen for Divi/WordPress AJAX page loads
+    document.addEventListener('DOMContentLoaded', function() {
+      // Divi theme specific
+      if (window.et_pb_custom && window.et_pb_custom.ajaxurl) {
+        console.log('[VP Floating Button] Divi theme detected, watching for AJAX navigation');
+      }
+    });
   }
   
   window.VisionPrivacyFloatingButton = {
@@ -1425,10 +1459,23 @@ function getFloatingButtonJs(): string {
     hide: function() {
       const button = document.getElementById(BUTTON_ID);
       if (button) button.remove();
+    },
+    ensureVisible: function() {
+      // Ensure button is visible if consent exists
+      if (!document.getElementById(BUTTON_ID) && hasConsent()) {
+        createFloatingButton(true);
+      }
     }
   };
   
   init();
+  
+  // Periodically check if button needs to be recreated (for AJAX navigation)
+  setInterval(function() {
+    if (window.VisionPrivacyFloatingButton) {
+      window.VisionPrivacyFloatingButton.ensureVisible();
+    }
+  }, 2000); // Check every 2 seconds
 })();
   `.trim()
 }

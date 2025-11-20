@@ -67,8 +67,23 @@
           this.enforceConsent();
           
           // Show floating button since user already has consent
-          if (window.VisionPrivacyFloatingButton && typeof window.VisionPrivacyFloatingButton.show === 'function') {
-            window.VisionPrivacyFloatingButton.show();
+          // Retry a few times in case the floating button script hasn't loaded yet
+          const showFloatingButton = () => {
+            if (window.VisionPrivacyFloatingButton && typeof window.VisionPrivacyFloatingButton.show === 'function') {
+              window.VisionPrivacyFloatingButton.show();
+              return true;
+            }
+            return false;
+          };
+          
+          if (!showFloatingButton()) {
+            // Retry after a short delay
+            setTimeout(() => {
+              if (!showFloatingButton()) {
+                // One more retry
+                setTimeout(showFloatingButton, 500);
+              }
+            }, 100);
           }
         }
         
