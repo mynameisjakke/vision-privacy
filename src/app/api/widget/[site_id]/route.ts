@@ -1278,7 +1278,24 @@ function getFloatingButtonJs(): string {
   
   function isBannerVisible() {
     const banner = document.querySelector('.vision-privacy-banner, .vp-banner');
-    return banner && banner.style.display !== 'none';
+    if (!banner) {
+      console.log('[VP Floating Button] No banner found in DOM');
+      return false;
+    }
+    
+    // Check if banner is actually visible (not hidden and not removed from DOM)
+    const computedStyle = window.getComputedStyle(banner);
+    const isVisible = computedStyle.display !== 'none' && banner.offsetParent !== null;
+    
+    console.log('[VP Floating Button] Banner visibility check:', {
+      found: true,
+      inlineDisplay: banner.style.display,
+      computedDisplay: computedStyle.display,
+      hasOffsetParent: banner.offsetParent !== null,
+      isVisible: isVisible
+    });
+    
+    return isVisible;
   }
   
   function createFloatingButton(force) {
@@ -1326,8 +1343,21 @@ function getFloatingButtonJs(): string {
   
   function updateButtonVisibility() {
     const button = document.getElementById(BUTTON_ID);
-    if (!button) return;
-    button.style.display = isBannerVisible() ? 'none' : 'flex';
+    if (!button) {
+      console.log('[VP Floating Button] updateButtonVisibility: button not found');
+      return;
+    }
+    
+    const bannerVisible = isBannerVisible();
+    const newDisplay = bannerVisible ? 'none' : 'flex';
+    
+    console.log('[VP Floating Button] Updating button visibility:', {
+      bannerVisible: bannerVisible,
+      newDisplay: newDisplay,
+      currentDisplay: button.style.display
+    });
+    
+    button.style.display = newDisplay;
   }
   
   function init() {
