@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
       status: 200,
       headers: {
         'Content-Type': 'application/javascript',
-        'Cache-Control': 'public, max-age=3600, s-maxage=3600', // 1 hour cache
+        'Cache-Control': 'public, max-age=300, s-maxage=300', // 5 minutes cache (reduced from 1 hour)
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET',
         'Access-Control-Allow-Headers': 'Content-Type',
