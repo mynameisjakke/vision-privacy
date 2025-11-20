@@ -7,8 +7,10 @@
 (function() {
   'use strict';
 
-  // Prevent multiple initializations
-  if (window.VisionPrivacy) {
+  // Prevent multiple initializations on the same page
+  // But allow re-initialization on page navigation/reload
+  if (window.VisionPrivacy && window.VisionPrivacy.isInitialized) {
+    console.log('[VP Widget] Already initialized on this page, skipping');
     return;
   }
 
