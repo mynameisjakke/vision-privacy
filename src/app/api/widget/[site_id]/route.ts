@@ -1263,12 +1263,19 @@ function getFloatingButtonJs(): string {
   
   const BUTTON_ID = 'vision-privacy-floating-btn';
   
+  function getSiteId() {
+    // Try multiple sources for site ID
+    return window.VP_SITE_ID || 
+           (window.VisionPrivacy && window.VisionPrivacy.siteId) ||
+           document.body.dataset.vpSiteId;
+  }
+  
   function hasConsent() {
     try {
       // Check for consent with the correct key format: vp_consent_{siteId}
-      const siteId = window.VP_SITE_ID;
+      const siteId = getSiteId();
       if (!siteId) {
-        console.warn('[VP Floating Button] No VP_SITE_ID found');
+        console.warn('[VP Floating Button] No site ID found (checked VP_SITE_ID, VisionPrivacy.siteId, body[data-vp-site-id])');
         return false;
       }
       
@@ -1359,10 +1366,26 @@ function getFloatingButtonJs(): string {
   function init() {
     console.log('[VP Floating Button] init() called, readyState:', document.readyState);
     
+    // Try to create button immediately if we have site ID
+    const attemptCreate = function() {
+      const siteId = getSiteId();
+      if (siteId) {
+        console.log('[VP Floating Button] Site ID found:', siteId);
+        createFloatingButton();
+      } else {
+        console.log('[VP Floating Button] No site ID yet, will retry when widget initializes');
+        // Listen for widget initialization
+        window.addEventListener('vp:initialized', function() {
+          console.log('[VP Floating Button] Widget initialized, retrying button creation');
+          createFloatingButton();
+        });
+      }
+    };
+    
     if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', createFloatingButton);
+      document.addEventListener('DOMContentLoaded', attemptCreate);
     } else {
-      createFloatingButton();
+      attemptCreate();
     }
     
     const observer = new MutationObserver(updateButtonVisibility);
@@ -1380,7 +1403,7 @@ function getFloatingButtonJs(): string {
     }
     
     window.addEventListener('storage', function(e) {
-      const siteId = window.VP_SITE_ID;
+      const siteId = getSiteId();
       if (!siteId) return;
       
       const consentKey = 'vp_consent_' + siteId;
