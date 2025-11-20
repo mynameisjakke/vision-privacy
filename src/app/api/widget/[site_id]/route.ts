@@ -1281,10 +1281,20 @@ function getFloatingButtonJs(): string {
     return banner && banner.style.display !== 'none';
   }
   
-  function createFloatingButton() {
-    if (!hasConsent() || document.getElementById(BUTTON_ID)) {
+  function createFloatingButton(force) {
+    // If button already exists, don't create another one
+    if (document.getElementById(BUTTON_ID)) {
+      console.log('[VP Floating Button] Button already exists');
       return;
     }
+    
+    // Only check consent if not forced (force=true when called explicitly after consent saved)
+    if (!force && !hasConsent()) {
+      console.log('[VP Floating Button] No consent found, not creating button');
+      return;
+    }
+    
+    console.log('[VP Floating Button] Creating floating button');
     
     const button = document.createElement('button');
     button.id = BUTTON_ID;
@@ -1310,6 +1320,7 @@ function getFloatingButtonJs(): string {
     });
     
     document.body.appendChild(button);
+    console.log('[VP Floating Button] Button added to DOM');
     updateButtonVisibility();
   }
   
@@ -1357,7 +1368,10 @@ function getFloatingButtonJs(): string {
   }
   
   window.VisionPrivacyFloatingButton = {
-    show: createFloatingButton,
+    show: function() {
+      console.log('[VP Floating Button] show() called explicitly');
+      createFloatingButton(true); // Force creation when called explicitly
+    },
     hide: function() {
       const button = document.getElementById(BUTTON_ID);
       if (button) button.remove();
