@@ -1431,7 +1431,193 @@
       
       cookies.push(vpConsentCookie);
 
+      // Detect third-party services and add their known cookies
+      const thirdPartyCookies = this.detectThirdPartyServiceCookies();
+      cookies.push(...thirdPartyCookies);
+
       return cookies;
+    }
+
+    /**
+     * Detect third-party services (Google Analytics, reCAPTCHA, Facebook, etc.)
+     * and return their known cookies
+     */
+    detectThirdPartyServiceCookies() {
+      const detectedCookies = [];
+      const detectedAt = new Date().toISOString();
+
+      // Check for Google Analytics
+      if (this.hasGoogleAnalytics()) {
+        detectedCookies.push(
+          {
+            name: '_ga',
+            domain: '.google.com',
+            category: 'analytics',
+            detected_at: detectedAt,
+            has_value: true,
+            storage_type: 'cookie',
+            description: 'Google Analytics - Används för att skilja användare åt',
+            duration: '2 år'
+          },
+          {
+            name: '_gid',
+            domain: '.google.com',
+            category: 'analytics',
+            detected_at: detectedAt,
+            has_value: true,
+            storage_type: 'cookie',
+            description: 'Google Analytics - Används för att skilja användare åt',
+            duration: '24 timmar'
+          },
+          {
+            name: '_gat',
+            domain: '.google.com',
+            category: 'analytics',
+            detected_at: detectedAt,
+            has_value: true,
+            storage_type: 'cookie',
+            description: 'Google Analytics - Används för att begränsa förfrågningar',
+            duration: '1 minut'
+          }
+        );
+      }
+
+      // Check for Google reCAPTCHA
+      if (this.hasGoogleReCaptcha()) {
+        detectedCookies.push(
+          {
+            name: '_GRECAPTCHA',
+            domain: '.google.com',
+            category: 'functional',
+            detected_at: detectedAt,
+            has_value: true,
+            storage_type: 'cookie',
+            description: 'Google reCAPTCHA - Skydd mot spam och missbruk',
+            duration: '6 månader'
+          },
+          {
+            name: '_grecaptcha',
+            domain: window.location.hostname,
+            category: 'functional',
+            detected_at: detectedAt,
+            has_value: true,
+            storage_type: 'localStorage',
+            description: 'Google reCAPTCHA - Lokal lagring för spam-skydd',
+            duration: 'Permanent'
+          }
+        );
+      }
+
+      // Check for Facebook Pixel
+      if (this.hasFacebookPixel()) {
+        detectedCookies.push(
+          {
+            name: '_fbp',
+            domain: '.facebook.com',
+            category: 'advertising',
+            detected_at: detectedAt,
+            has_value: true,
+            storage_type: 'cookie',
+            description: 'Facebook Pixel - Spårar besökare för annonser',
+            duration: '3 månader'
+          },
+          {
+            name: '_fbc',
+            domain: '.facebook.com',
+            category: 'advertising',
+            detected_at: detectedAt,
+            has_value: true,
+            storage_type: 'cookie',
+            description: 'Facebook Pixel - Lagrar klick-information',
+            duration: '2 år'
+          }
+        );
+      }
+
+      // Check for Google Tag Manager
+      if (this.hasGoogleTagManager()) {
+        detectedCookies.push({
+          name: '_gcl_au',
+          domain: '.google.com',
+          category: 'advertising',
+          detected_at: detectedAt,
+          has_value: true,
+          storage_type: 'cookie',
+          description: 'Google Tag Manager - Konverteringsspårning',
+          duration: '3 månader'
+        });
+      }
+
+      return detectedCookies;
+    }
+
+    /**
+     * Check if Google Analytics is present on the page
+     */
+    hasGoogleAnalytics() {
+      // Check for GA script
+      const scripts = document.querySelectorAll('script[src]');
+      for (const script of scripts) {
+        if (script.src.includes('google-analytics.com') || 
+            script.src.includes('googletagmanager.com/gtag') ||
+            script.src.includes('analytics.js') ||
+            script.src.includes('gtag/js')) {
+          return true;
+        }
+      }
+      
+      // Check for GA global objects
+      return !!(window.ga || window.gtag || window.dataLayer);
+    }
+
+    /**
+     * Check if Google reCAPTCHA is present on the page
+     */
+    hasGoogleReCaptcha() {
+      // Check for reCAPTCHA script
+      const scripts = document.querySelectorAll('script[src]');
+      for (const script of scripts) {
+        if (script.src.includes('recaptcha') || script.src.includes('gstatic.com/recaptcha')) {
+          return true;
+        }
+      }
+      
+      // Check for reCAPTCHA elements
+      return !!(document.querySelector('.g-recaptcha') || 
+                document.querySelector('[data-sitekey]') ||
+                window.grecaptcha);
+    }
+
+    /**
+     * Check if Facebook Pixel is present on the page
+     */
+    hasFacebookPixel() {
+      // Check for Facebook Pixel script
+      const scripts = document.querySelectorAll('script[src]');
+      for (const script of scripts) {
+        if (script.src.includes('connect.facebook.net')) {
+          return true;
+        }
+      }
+      
+      // Check for FB global objects
+      return !!(window.fbq || window._fbq);
+    }
+
+    /**
+     * Check if Google Tag Manager is present on the page
+     */
+    hasGoogleTagManager() {
+      // Check for GTM script
+      const scripts = document.querySelectorAll('script[src]');
+      for (const script of scripts) {
+        if (script.src.includes('googletagmanager.com/gtm.js')) {
+          return true;
+        }
+      }
+      
+      // Check for GTM global objects
+      return !!(window.google_tag_manager || window.dataLayer);
     }
 
     /**
