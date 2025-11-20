@@ -2231,5 +2231,17 @@
 
   // Start auto-initialization
   autoInit();
+  
+  // Re-initialize on page show (handles back/forward cache)
+  window.addEventListener('pageshow', function(event) {
+    // If page is loaded from cache (bfcache), re-initialize
+    if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {
+      console.log('[VP Widget] Page loaded from cache, re-initializing...');
+      if (window.VisionPrivacy) {
+        window.VisionPrivacy.isInitialized = false;
+        window.VisionPrivacy.init();
+      }
+    }
+  });
 
 })();
