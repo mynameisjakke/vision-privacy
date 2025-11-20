@@ -1267,11 +1267,25 @@ function getFloatingButtonJs(): string {
     try {
       // Check for consent with the correct key format: vp_consent_{siteId}
       const siteId = window.VP_SITE_ID;
-      if (!siteId) return false;
+      if (!siteId) {
+        console.warn('[VP Floating Button] No VP_SITE_ID found');
+        return false;
+      }
       
       const consentKey = 'vp_consent_' + siteId;
-      return localStorage.getItem(consentKey) !== null;
+      const consentData = localStorage.getItem(consentKey);
+      const hasIt = consentData !== null;
+      
+      console.log('[VP Floating Button] hasConsent check:', {
+        siteId: siteId,
+        consentKey: consentKey,
+        hasConsent: hasIt,
+        consentDataLength: consentData ? consentData.length : 0
+      });
+      
+      return hasIt;
     } catch (e) {
+      console.error('[VP Floating Button] hasConsent error:', e);
       return false;
     }
   }
@@ -1290,15 +1304,21 @@ function getFloatingButtonJs(): string {
   }
   
   function createFloatingButton(force) {
+    console.log('[VP Floating Button] createFloatingButton called:', { force: force });
+    
     // If button already exists, don't create another one
     if (document.getElementById(BUTTON_ID)) {
+      console.log('[VP Floating Button] Button already exists, skipping');
       return;
     }
     
     // Only check consent if not forced (force=true when called explicitly after consent saved)
     if (!force && !hasConsent()) {
+      console.log('[VP Floating Button] No consent and not forced, skipping button creation');
       return;
     }
+    
+    console.log('[VP Floating Button] Creating button...');
     
     const button = document.createElement('button');
     button.id = BUTTON_ID;
@@ -1324,6 +1344,7 @@ function getFloatingButtonJs(): string {
     });
     
     document.body.appendChild(button);
+    console.log('[VP Floating Button] Button added to DOM');
     updateButtonVisibility();
   }
   
@@ -1336,6 +1357,8 @@ function getFloatingButtonJs(): string {
   }
   
   function init() {
+    console.log('[VP Floating Button] init() called, readyState:', document.readyState);
+    
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', createFloatingButton);
     } else {
