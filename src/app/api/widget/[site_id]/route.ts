@@ -1272,27 +1272,12 @@ function getFloatingButtonJs(): string {
   
   function hasConsent() {
     try {
-      // Check for consent with the correct key format: vp_consent_{siteId}
       const siteId = getSiteId();
-      if (!siteId) {
-        console.warn('[VP Floating Button] No site ID found (checked VP_SITE_ID, VisionPrivacy.siteId, body[data-vp-site-id])');
-        return false;
-      }
+      if (!siteId) return false;
       
       const consentKey = 'vp_consent_' + siteId;
-      const consentData = localStorage.getItem(consentKey);
-      const hasIt = consentData !== null;
-      
-      console.log('[VP Floating Button] hasConsent check:', {
-        siteId: siteId,
-        consentKey: consentKey,
-        hasConsent: hasIt,
-        consentDataLength: consentData ? consentData.length : 0
-      });
-      
-      return hasIt;
+      return localStorage.getItem(consentKey) !== null;
     } catch (e) {
-      console.error('[VP Floating Button] hasConsent error:', e);
       return false;
     }
   }
@@ -1311,21 +1296,15 @@ function getFloatingButtonJs(): string {
   }
   
   function createFloatingButton(force) {
-    console.log('[VP Floating Button] createFloatingButton called:', { force: force });
-    
     // If button already exists, don't create another one
     if (document.getElementById(BUTTON_ID)) {
-      console.log('[VP Floating Button] Button already exists, skipping');
       return;
     }
     
     // Only check consent if not forced (force=true when called explicitly after consent saved)
     if (!force && !hasConsent()) {
-      console.log('[VP Floating Button] No consent and not forced, skipping button creation');
       return;
     }
-    
-    console.log('[VP Floating Button] Creating button...');
     
     const button = document.createElement('button');
     button.id = BUTTON_ID;
@@ -1351,7 +1330,6 @@ function getFloatingButtonJs(): string {
     });
     
     document.body.appendChild(button);
-    console.log('[VP Floating Button] Button added to DOM');
     updateButtonVisibility();
   }
   
@@ -1364,19 +1342,14 @@ function getFloatingButtonJs(): string {
   }
   
   function init() {
-    console.log('[VP Floating Button] init() called, readyState:', document.readyState);
-    
     // Try to create button immediately if we have site ID
     const attemptCreate = function() {
       const siteId = getSiteId();
       if (siteId) {
-        console.log('[VP Floating Button] Site ID found:', siteId);
         createFloatingButton();
       } else {
-        console.log('[VP Floating Button] No site ID yet, will retry when widget initializes');
         // Listen for widget initialization
         window.addEventListener('vp:initialized', function() {
-          console.log('[VP Floating Button] Widget initialized, retrying button creation');
           createFloatingButton();
         });
       }
@@ -1420,35 +1393,23 @@ function getFloatingButtonJs(): string {
     // Watch for page navigation (AJAX/SPA navigation)
     // Recreate button if it gets removed during page transitions
     const bodyObserver = new MutationObserver(function() {
-      // Check if button exists and user has consent
       if (!document.getElementById(BUTTON_ID) && hasConsent()) {
-        console.log('[VP Floating Button] Button removed during page navigation, recreating...');
         createFloatingButton(true);
       }
     });
     
-    // Observe body for child list changes (page navigation)
     bodyObserver.observe(document.body, { 
       childList: true, 
       subtree: false 
     });
     
-    // Also listen for common page navigation events
+    // Listen for browser back/forward navigation
     window.addEventListener('popstate', function() {
-      console.log('[VP Floating Button] popstate event detected');
       setTimeout(function() {
         if (!document.getElementById(BUTTON_ID) && hasConsent()) {
           createFloatingButton(true);
         }
       }, 100);
-    });
-    
-    // Listen for Divi/WordPress AJAX page loads
-    document.addEventListener('DOMContentLoaded', function() {
-      // Divi theme specific
-      if (window.et_pb_custom && window.et_pb_custom.ajaxurl) {
-        console.log('[VP Floating Button] Divi theme detected, watching for AJAX navigation');
-      }
     });
   }
   
