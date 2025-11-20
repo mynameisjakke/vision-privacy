@@ -1,18 +1,18 @@
 <?php
 /**
- * Plugin Name: Vision Privacy
- * Plugin URI: https://visionmedia.se
- * Description: Centralized privacy and cookie policy management for GDPR/IMY compliance
- * Version: 1.0.5
+ * Plugin Name: Vision Privacy Legacy
+ * Plugin URI: https://visionmedia.io
+ * Description: Centralized privacy and cookie policy management for GDPR/IMY compliance (PHP 7.3 compatible version)
+ * Version: 1.0.5-legacy
  * Author: Jakob Bourhil @ Vision Media
  * Author URI: https://visionmedia.io
  * License: GPL v2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
- * Text Domain: vision-privacy
+ * Text Domain: vision-privacy-legacy
  * Domain Path: /languages
  * Requires at least: 5.0
  * Tested up to: 6.4
- * Requires PHP: 7.4
+ * Requires PHP: 7.3
  * Network: false
  */
 
@@ -22,16 +22,16 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('VISION_PRIVACY_VERSION', '1.0.5');
-define('VISION_PRIVACY_PLUGIN_FILE', __FILE__);
-define('VISION_PRIVACY_PLUGIN_DIR', plugin_dir_path(__FILE__));
-define('VISION_PRIVACY_PLUGIN_URL', plugin_dir_url(__FILE__));
-define('VISION_PRIVACY_API_ENDPOINT', 'https://vision-privacy.vercel.app');
+define('VISION_PRIVACY_LEGACY_VERSION', '1.0.5-legacy');
+define('VISION_PRIVACY_LEGACY_PLUGIN_FILE', __FILE__);
+define('VISION_PRIVACY_LEGACY_PLUGIN_DIR', plugin_dir_path(__FILE__));
+define('VISION_PRIVACY_LEGACY_PLUGIN_URL', plugin_dir_url(__FILE__));
+define('VISION_PRIVACY_LEGACY_API_ENDPOINT', 'https://vision-privacy.vercel.app');
 
 /**
- * Main Vision Privacy Plugin Class
+ * Main Vision Privacy Plugin Legacy Class
  */
-class VisionPrivacyPlugin {
+class VisionPrivacyPluginLegacy {
     
     /**
      * Plugin instance
@@ -64,7 +64,7 @@ class VisionPrivacyPlugin {
      * Constructor
      */
     private function __construct() {
-        $this->api_endpoint = VISION_PRIVACY_API_ENDPOINT;
+        $this->api_endpoint = VISION_PRIVACY_LEGACY_API_ENDPOINT;
         $this->site_id = get_option('vision_privacy_site_id');
         $this->api_token = get_option('vision_privacy_token');
         $this->widget_url = get_option('vision_privacy_widget_url');
@@ -77,8 +77,8 @@ class VisionPrivacyPlugin {
      */
     private function init_hooks() {
         // Activation and deactivation hooks
-        register_activation_hook(VISION_PRIVACY_PLUGIN_FILE, array($this, 'activate'));
-        register_deactivation_hook(VISION_PRIVACY_PLUGIN_FILE, array($this, 'deactivate'));
+        register_activation_hook(VISION_PRIVACY_LEGACY_PLUGIN_FILE, array($this, 'activate'));
+        register_deactivation_hook(VISION_PRIVACY_LEGACY_PLUGIN_FILE, array($this, 'deactivate'));
         
         // Admin hooks
         add_action('admin_menu', array($this, 'add_admin_menu'));
@@ -90,10 +90,10 @@ class VisionPrivacyPlugin {
         add_action('init', array($this, 'check_site_url_change'));
         
         // AJAX hooks for admin
-        add_action('wp_ajax_vision_privacy_register', array($this, 'ajax_register_site'));
-        add_action('wp_ajax_vision_privacy_test_connection', array($this, 'ajax_test_connection'));
-        add_action('wp_ajax_vision_privacy_save_company', array($this, 'ajax_save_company_info'));
-        add_action('wp_ajax_vision_privacy_clear_error', array($this, 'ajax_clear_error'));
+        add_action('wp_ajax_vision_privacy_legacy_register', array($this, 'ajax_register_site'));
+        add_action('wp_ajax_vision_privacy_legacy_test_connection', array($this, 'ajax_test_connection'));
+        add_action('wp_ajax_vision_privacy_legacy_save_company', array($this, 'ajax_save_company_info'));
+        add_action('wp_ajax_vision_privacy_legacy_clear_error', array($this, 'ajax_clear_error'));
         
         // Add shortcode for manual widget placement
         add_shortcode('vision_privacy_widget', array($this, 'widget_shortcode'));
@@ -103,17 +103,17 @@ class VisionPrivacyPlugin {
      * Plugin activation
      */
     public function activate() {
-        // Check for mutual exclusion - prevent activation if legacy plugin is active
-        if ($this->is_legacy_plugin_active()) {
+        // Check for mutual exclusion - prevent activation if main plugin is active
+        if ($this->is_main_plugin_active()) {
             // Deactivate this plugin
-            deactivate_plugins(plugin_basename(VISION_PRIVACY_PLUGIN_FILE));
+            deactivate_plugins(plugin_basename(VISION_PRIVACY_LEGACY_PLUGIN_FILE));
             
             // Display error message
             wp_die(
                 '<h1>Plugin Activation Error</h1>' .
-                '<p><strong>Vision Privacy</strong> cannot be activated because <strong>Vision Privacy Legacy</strong> is already active.</p>' .
+                '<p><strong>Vision Privacy Legacy</strong> cannot be activated because <strong>Vision Privacy</strong> is already active.</p>' .
                 '<p>You can only have one version of Vision Privacy active at a time.</p>' .
-                '<p>If you need to use the main version (requires PHP 7.4+), please deactivate the Vision Privacy Legacy plugin first.</p>' .
+                '<p>If you need to use the legacy version (PHP 7.3 compatible), please deactivate the main Vision Privacy plugin first.</p>' .
                 '<p><a href="' . admin_url('plugins.php') . '">Return to Plugins</a></p>',
                 'Plugin Activation Error',
                 array('back_link' => true)
@@ -135,18 +135,18 @@ class VisionPrivacyPlugin {
     }
     
     /**
-     * Check if legacy Vision Privacy plugin is active
+     * Check if main Vision Privacy plugin is active
      * 
-     * @return bool True if legacy plugin is active, false otherwise
+     * @return bool True if main plugin is active, false otherwise
      */
-    private function is_legacy_plugin_active() {
-        // Check if the legacy plugin file exists and is active
+    private function is_main_plugin_active() {
+        // Check if the main plugin file exists and is active
         if (!function_exists('is_plugin_active')) {
             require_once ABSPATH . 'wp-admin/includes/plugin.php';
         }
         
-        // Check for legacy plugin by its file path
-        return is_plugin_active('vision-privacy-legacy/vision-privacy-legacy.php');
+        // Check for main plugin by its file path
+        return is_plugin_active('vision-privacy/vision-privacy.php');
     }
     
     /**
@@ -194,7 +194,7 @@ class VisionPrivacyPlugin {
                 'wp_version' => get_bloginfo('version'),
                 'installed_plugins' => $this->get_installed_plugins(),
                 'detected_forms' => $this->detect_forms(),
-                'plugin_version' => VISION_PRIVACY_VERSION,
+                'plugin_version' => VISION_PRIVACY_LEGACY_VERSION,
                 'site_name' => get_bloginfo('name'),
                 'admin_email' => get_option('admin_email'),
                 'site_language' => get_locale(),
@@ -218,7 +218,7 @@ class VisionPrivacyPlugin {
                 'body' => json_encode($site_data),
                 'headers' => array(
                     'Content-Type' => 'application/json',
-                    'User-Agent' => 'VisionPrivacy-WP/' . VISION_PRIVACY_VERSION,
+                    'User-Agent' => 'VisionPrivacy-WP-Legacy/' . VISION_PRIVACY_LEGACY_VERSION,
                     // Include auth token if we have one (for updates)
                     'Authorization' => !empty($this->api_token) ? 'Bearer ' . $this->api_token : ''
                 ),
@@ -288,7 +288,7 @@ class VisionPrivacyPlugin {
                     'headers' => array(
                         'Content-Type' => 'application/json',
                         'Authorization' => 'Bearer ' . $this->api_token,
-                        'User-Agent' => 'VisionPrivacy-WP/' . VISION_PRIVACY_VERSION
+                        'User-Agent' => 'VisionPrivacy-WP-Legacy/' . VISION_PRIVACY_LEGACY_VERSION
                     ),
                     'timeout' => 15,
                     'sslverify' => true
@@ -600,7 +600,8 @@ class VisionPrivacyPlugin {
             )),
             'headers' => array(
                 'Content-Type' => 'application/json',
-                'Authorization' => 'Bearer ' . $this->api_token
+                'Authorization' => 'Bearer ' . $this->api_token,
+                'User-Agent' => 'VisionPrivacy-WP-Legacy/' . VISION_PRIVACY_LEGACY_VERSION
             ),
             'timeout' => 10,
             'blocking' => false // Don't wait for response during deactivation
@@ -612,10 +613,10 @@ class VisionPrivacyPlugin {
      */
     public function add_admin_menu() {
         add_options_page(
-            'Vision Privacy Settings',
-            'Vision Privacy',
+            'Vision Privacy Legacy Settings',
+            'Vision Privacy Legacy',
             'manage_options',
-            'vision-privacy',
+            'vision-privacy-legacy',
             array($this, 'admin_page')
         );
     }
@@ -662,7 +663,7 @@ class VisionPrivacyPlugin {
         if (!empty($last_error) && get_option('vision_privacy_registration_status') === 'error') {
             echo '<div class="notice notice-error is-dismissible">';
             echo '<p><strong>Vision Privacy Error:</strong> ' . esc_html($last_error) . '</p>';
-            echo '<p><a href="' . admin_url('options-general.php?page=vision-privacy') . '">Go to settings</a></p>';
+            echo '<p><a href="' . admin_url('options-general.php?page=vision-privacy-legacy') . '">Go to settings</a></p>';
             echo '</div>';
         }
         
@@ -678,7 +679,7 @@ class VisionPrivacyPlugin {
             delete_transient('vision_privacy_domain_change_error');
             echo '<div class="notice notice-error is-dismissible">';
             echo '<p><strong>Vision Privacy:</strong> Domain change detected but re-registration failed. Please check settings.</p>';
-            echo '<p><a href="' . admin_url('options-general.php?page=vision-privacy') . '">Go to settings</a></p>';
+            echo '<p><a href="' . admin_url('options-general.php?page=vision-privacy-legacy') . '">Go to settings</a></p>';
             echo '</div>';
         }
     }
@@ -687,14 +688,14 @@ class VisionPrivacyPlugin {
      * Admin page content
      */
     public function admin_page() {
-        include_once VISION_PRIVACY_PLUGIN_DIR . 'includes/admin-page.php';
+        include_once VISION_PRIVACY_LEGACY_PLUGIN_DIR . 'includes/admin-page.php';
     }
     
     /**
      * AJAX handler for manual site registration
      */
     public function ajax_register_site() {
-        check_ajax_referer('vision_privacy_admin', 'nonce');
+        check_ajax_referer('vision_privacy_legacy_admin', 'nonce');
         
         if (!current_user_can('manage_options')) {
             wp_die('Unauthorized');
@@ -712,13 +713,16 @@ class VisionPrivacyPlugin {
      * AJAX handler for testing API connection
      */
     public function ajax_test_connection() {
-        check_ajax_referer('vision_privacy_admin', 'nonce');
+        check_ajax_referer('vision_privacy_legacy_admin', 'nonce');
         
         if (!current_user_can('manage_options')) {
             wp_die('Unauthorized');
         }
         
         $response = wp_remote_get($this->api_endpoint . '/api/health', array(
+            'headers' => array(
+                'User-Agent' => 'VisionPrivacy-WP-Legacy/' . VISION_PRIVACY_LEGACY_VERSION
+            ),
             'timeout' => 10
         ));
         
@@ -740,7 +744,7 @@ class VisionPrivacyPlugin {
      * AJAX handler for clearing error messages
      */
     public function ajax_clear_error() {
-        check_ajax_referer('vision_privacy_admin', 'nonce');
+        check_ajax_referer('vision_privacy_legacy_admin', 'nonce');
         
         if (!current_user_can('manage_options')) {
             wp_die('Unauthorized');
@@ -823,7 +827,7 @@ class VisionPrivacyPlugin {
             'api_endpoint' => $this->api_endpoint,
             'domain' => $this->get_site_domain(),
             'wp_version' => get_bloginfo('version'),
-            'plugin_version' => VISION_PRIVACY_VERSION,
+            'plugin_version' => VISION_PRIVACY_LEGACY_VERSION,
             'language' => get_locale(),
             'debug' => defined('WP_DEBUG') && WP_DEBUG
         );
@@ -1001,7 +1005,7 @@ class VisionPrivacyPlugin {
      * AJAX handler for saving company information
      */
     public function ajax_save_company_info() {
-        check_ajax_referer('vision_privacy_admin', 'nonce');
+        check_ajax_referer('vision_privacy_legacy_admin', 'nonce');
         
         if (!current_user_can('manage_options')) {
             wp_die('Unauthorized');
@@ -1055,20 +1059,20 @@ class VisionPrivacyPlugin {
 }
 
 // Initialize the plugin
-function vision_privacy_init() {
-    return VisionPrivacyPlugin::get_instance();
+function vision_privacy_legacy_init() {
+    return VisionPrivacyPluginLegacy::get_instance();
 }
 
 // Start the plugin
-add_action('plugins_loaded', 'vision_privacy_init');
+add_action('plugins_loaded', 'vision_privacy_legacy_init');
 
 // Uninstall hook
-register_uninstall_hook(__FILE__, 'vision_privacy_uninstall');
+register_uninstall_hook(__FILE__, 'vision_privacy_legacy_uninstall');
 
 /**
  * Plugin uninstall cleanup
  */
-function vision_privacy_uninstall() {
+function vision_privacy_legacy_uninstall() {
     // Delete all plugin options
     delete_option('vision_privacy_site_id');
     delete_option('vision_privacy_token');
