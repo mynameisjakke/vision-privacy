@@ -6,6 +6,7 @@ import { SitesDB, CookieCategoriesDB, PolicyTemplatesDB } from '@/lib/database'
 import { WidgetCache, CookieCache, PolicyCache, SiteCache } from '@/lib/cache'
 import { withPerformanceMonitoring, ResponseOptimizer } from '@/lib/performance'
 import { withAuthMiddleware, createAuthenticatedResponse } from '@/lib/auth-middleware'
+import * as Sentry from '@sentry/nextjs'
 
 interface WidgetConfigResponse {
   banner_html: string
@@ -121,6 +122,19 @@ export async function GET(
       
     } catch (error) {
       console.error('Widget config fetch failed:', error)
+      
+      // Track error in Sentry
+      Sentry.captureException(error, {
+        tags: {
+          endpoint: 'widget_config',
+          site_id: params.site_id
+        },
+        extra: {
+          site_id: params.site_id,
+          cache_hit: false
+        }
+      })
+      
       return createAuthenticatedResponse(
         {
           error: 'Internal error',

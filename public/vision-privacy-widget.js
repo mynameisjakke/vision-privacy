@@ -984,6 +984,18 @@
     handleError(message, error) {
       console.error(`Vision Privacy Widget: ${message}`, error);
       
+      // Report error to Sentry if available
+      if (window.VisionPrivacySentry) {
+        window.VisionPrivacySentry.captureException(error, {
+          level: 'error',
+          context: {
+            message: message,
+            siteId: this.siteId,
+            hasConsent: this.hasValidConsent()
+          }
+        });
+      }
+      
       // Dispatch error event for external handling
       this.dispatchEvent('vp:error', { 
         message, 

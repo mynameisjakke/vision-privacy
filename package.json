@@ -29,6 +29,7 @@
     "env:status": "./scripts/setup-env.sh status"
   },
   "dependencies": {
+    "@sentry/nextjs": "^10.26.0",
     "@supabase/supabase-js": "^2.38.0",
     "@upstash/ratelimit": "^2.0.6",
     "@upstash/redis": "^1.35.6",

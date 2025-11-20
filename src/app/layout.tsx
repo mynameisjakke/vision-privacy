@@ -1,8 +1,14 @@
 import type { Metadata } from 'next'
+import * as Sentry from '@sentry/nextjs'
 
-export const metadata: Metadata = {
-  title: 'Vision Privacy API',
-  description: 'Centralized privacy and cookie policy management for WordPress sites',
+export function generateMetadata(): Metadata {
+  return {
+    title: 'Vision Privacy API',
+    description: 'Centralized privacy and cookie policy management for WordPress sites',
+    other: {
+      ...Sentry.getTraceData()
+    }
+  }
 }
 
 export default function RootLayout({
