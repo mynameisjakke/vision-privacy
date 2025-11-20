@@ -107,14 +107,25 @@
         const data = await response.json();
         this.config = data;
         
+        console.log('[VP Widget] Config loaded:', {
+          hasFloatingButtonJs: !!data.floating_button_js,
+          hasFloatingButtonCss: !!data.floating_button_css,
+          floatingButtonJsLength: data.floating_button_js ? data.floating_button_js.length : 0
+        });
+        
         // Inject floating button JavaScript
         if (data.floating_button_js) {
           const floatingScript = document.createElement('script');
           floatingScript.id = 'vp-floating-button-script';
           floatingScript.textContent = data.floating_button_js;
           if (!document.getElementById('vp-floating-button-script')) {
+            console.log('[VP Widget] Injecting floating button JavaScript');
             document.head.appendChild(floatingScript);
+          } else {
+            console.log('[VP Widget] Floating button script already exists');
           }
+        } else {
+          console.warn('[VP Widget] No floating_button_js in config');
         }
 
         // Inject floating button CSS
@@ -123,8 +134,13 @@
           floatingStyle.id = 'vp-floating-button-styles';
           floatingStyle.textContent = data.floating_button_css;
           if (!document.getElementById('vp-floating-button-styles')) {
+            console.log('[VP Widget] Injecting floating button CSS');
             document.head.appendChild(floatingStyle);
+          } else {
+            console.log('[VP Widget] Floating button styles already exist');
           }
+        } else {
+          console.warn('[VP Widget] No floating_button_css in config');
         }
         
         // Cache the configuration
@@ -750,8 +766,16 @@
         this.dispatchEvent('vp:consent_saved', { categories });
         
         // Show floating settings button after consent is saved
+        console.log('[VP Widget] Checking for VisionPrivacyFloatingButton:', {
+          exists: !!window.VisionPrivacyFloatingButton,
+          hasShow: window.VisionPrivacyFloatingButton && typeof window.VisionPrivacyFloatingButton.show === 'function'
+        });
+        
         if (window.VisionPrivacyFloatingButton && typeof window.VisionPrivacyFloatingButton.show === 'function') {
+          console.log('[VP Widget] Calling VisionPrivacyFloatingButton.show()');
           window.VisionPrivacyFloatingButton.show();
+        } else {
+          console.warn('[VP Widget] VisionPrivacyFloatingButton not available or show() not a function');
         }
         
       } catch (error) {
