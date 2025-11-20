@@ -78,7 +78,7 @@ describe('/api/admin/templates', () => {
       context: { requestId: 'test-request-id', user: 'admin-user' }
     })
 
-    mockCreateAuthenticatedResponse.mockImplementation((data, status) => ({
+    mockCreateAuthenticatedResponse.mockImplementation((data: any, status: number) => ({
       json: () => Promise.resolve(data),
       status,
       headers: new Map()

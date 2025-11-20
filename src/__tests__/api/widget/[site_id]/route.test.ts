@@ -115,7 +115,7 @@ describe('/api/widget/[site_id]', () => {
     })
 
     // Default successful response creation
-    mockCreateAuthenticatedResponse.mockImplementation((data, status) => {
+    mockCreateAuthenticatedResponse.mockImplementation((data: any, status: number) => {
       const response = {
         json: () => Promise.resolve(data),
         status,

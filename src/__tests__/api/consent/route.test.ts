@@ -76,7 +76,7 @@ describe('/api/consent', () => {
     })
 
     // Default successful response creation
-    mockCreateAuthenticatedResponse.mockImplementation((data, status) => ({
+    mockCreateAuthenticatedResponse.mockImplementation((data: any, status: number) => ({
       json: () => Promise.resolve(data),
       status,
       headers: new Map()
