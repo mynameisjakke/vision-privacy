@@ -21,9 +21,9 @@ export const RATE_LIMITS = {
     requests: 100,
     window: '1 m' as const,
   },
-  // Site registration (more restrictive)
+  // Site registration (temporarily increased for bulk installation)
   registration: {
-    requests: 5,
+    requests: 500,
     window: '1 h' as const,
   },
   // Consent tracking (higher limit for user interactions)
