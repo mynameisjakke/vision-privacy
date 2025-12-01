@@ -395,16 +395,40 @@
      * Show cookie settings modal
      */
     showSettings() {
-      if (!this.config || !this.config.cookie_categories) {
-        console.error('Cannot show settings: configuration not loaded');
+      // Enhanced error checking and logging
+      if (!this.config) {
+        console.error('[VP] Cannot show settings: configuration not loaded');
+        console.log('[VP] Attempting to reload configuration...');
+        // Try to reload config and show settings
+        this.fetchConfig().then(() => {
+          if (this.config && this.config.cookie_categories) {
+            this.showSettings();
+          } else {
+            console.error('[VP] Failed to load configuration');
+          }
+        }).catch(err => {
+          console.error('[VP] Error loading configuration:', err);
+        });
         return;
       }
+      
+      if (!this.config.cookie_categories) {
+        console.error('[VP] Cannot show settings: cookie categories not available');
+        return;
+      }
+
+      console.log('[VP] Showing settings modal');
 
       // Remove existing modal if present
       this.hideSettings();
 
       // Create settings modal
       this.settingsModal = this.createSettingsModal();
+      
+      if (!this.settingsModal) {
+        console.error('[VP] Failed to create settings modal');
+        return;
+      }
       
       // Attach event listeners
       this.attachSettingsEvents();
@@ -414,6 +438,8 @@
       
       // Show modal
       this.settingsModal.style.display = 'flex';
+      
+      console.log('[VP] Settings modal displayed');
       
       this.dispatchEvent('vp:settings_shown');
     }
