@@ -11,6 +11,7 @@ import * as Sentry from '@sentry/nextjs'
 interface WidgetConfigResponse {
   banner_html: string
   banner_css: string
+  policy_modal_html: string
   floating_button_js: string
   floating_button_css: string
   cookie_categories: Array<{
@@ -201,6 +202,7 @@ async function generateWidgetConfig(siteId: string): Promise<WidgetConfigRespons
     return {
       banner_html: bannerHtml,
       banner_css: bannerCss,
+      policy_modal_html: getPolicyModalHtml(),
       floating_button_js: floatingButtonJs,
       floating_button_css: floatingButtonCss,
       cookie_categories: cookieCategories.map((category: any) => ({
@@ -313,6 +315,33 @@ function getDefaultBannerTemplate(): string {
         </div>
       </div>
     </div>
+    </div>
+  `
+}
+
+function getPolicyModalHtml(): string {
+  return `
+    <div id="vp-policy-modal" class="vp-modal vp-policy-modal" role="dialog" aria-modal="true" aria-labelledby="vp-policy-title" aria-describedby="vp-policy-content" aria-hidden="true" style="display: none;">
+      <div class="vp-modal-backdrop"></div>
+      <div class="vp-modal-content">
+        <div class="vp-modal-header">
+          <h3 id="vp-policy-title"></h3>
+          <button id="vp-close-policy" class="vp-close" aria-label="Stäng policy">&times;</button>
+        </div>
+        <div class="vp-modal-body">
+          <div id="vp-policy-loading" class="vp-loading" role="status" aria-live="polite">
+            <span class="vp-spinner"></span>
+            <p>Laddar policy...</p>
+          </div>
+          <div id="vp-policy-content" class="vp-policy-text" style="display: none;"></div>
+          <div id="vp-policy-error" class="vp-error" style="display: none;" role="alert" aria-live="assertive">
+            <p>Det gick inte att ladda policyn. Försök igen senare.</p>
+          </div>
+          <div class="vp-branding">
+            <a href="https://visionmedia.io" target="_blank" rel="noopener noreferrer">Drivs av Vision Media</a>
+          </div>
+        </div>
+      </div>
     </div>
   `
 }

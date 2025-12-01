@@ -65,6 +65,11 @@
           this.injectCSS(this.config.banner_css);
         }
         
+        // Always inject policy modal HTML (needed for policy links to work)
+        if (this.config && this.config.policy_modal_html) {
+          this.injectPolicyModal(this.config.policy_modal_html);
+        }
+        
         // Check if we need to show the banner
         if (!this.hasValidConsent()) {
           await this.showBanner();
@@ -340,6 +345,26 @@
       style.id = 'vp-widget-styles';
       style.textContent = cssString;
       document.head.appendChild(style);
+    }
+
+    /**
+     * Inject policy modal HTML into document body
+     */
+    injectPolicyModal(htmlString) {
+      // Check if policy modal already exists
+      if (document.getElementById('vp-policy-modal')) {
+        console.log('[VP] Policy modal already exists in DOM');
+        return;
+      }
+
+      console.log('[VP] Injecting policy modal HTML');
+      const modalElement = this.createElement(htmlString);
+      if (modalElement) {
+        document.body.appendChild(modalElement);
+        console.log('[VP] Policy modal injected successfully');
+      } else {
+        console.error('[VP] Failed to create policy modal element');
+      }
     }
 
     /**
