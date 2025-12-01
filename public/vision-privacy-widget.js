@@ -452,6 +452,11 @@
                 <button id="vp-save-settings" class="vp-btn vp-btn-primary">Spara inställningar</button>
                 <button id="vp-cancel-settings" class="vp-btn vp-btn-secondary">Avbryt</button>
               </div>
+              <div class="vp-modal-footer-links">
+                <button class="vp-policy-link" data-policy="privacy" type="button">Integritetspolicy</button>
+                <span class="vp-separator">•</span>
+                <button class="vp-policy-link" data-policy="cookie" type="button">Cookiepolicy</button>
+              </div>
               <div class="vp-branding">
                 <a href="https://visionmedia.io" target="_blank" rel="noopener noreferrer">Drivs av Vision Media</a>
               </div>

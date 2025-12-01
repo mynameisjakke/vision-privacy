@@ -750,6 +750,32 @@ function generateBannerCss(): string {
       font-size: 13px;
     }
     
+    .vp-policy-link {
+      background: none;
+      border: none;
+      padding: 0;
+      font-size: 13px;
+      color: #666;
+      text-decoration: underline;
+      cursor: pointer;
+      transition: color 0.2s ease;
+    }
+    
+    .vp-policy-link:hover {
+      color: #000;
+    }
+    
+    .vp-policy-link:focus {
+      outline: 2px solid #000;
+      outline-offset: 2px;
+      border-radius: 2px;
+    }
+    
+    .vp-separator {
+      color: #ccc;
+      user-select: none;
+    }
+    
     /* Branding */
     .vp-branding {
       text-align: center;
