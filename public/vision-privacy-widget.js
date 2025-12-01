@@ -60,6 +60,11 @@
         // Fetch configuration from API
         await this.fetchConfig();
         
+        // Always inject CSS (needed for modals even if banner doesn't show)
+        if (this.config && this.config.banner_css) {
+          this.injectCSS(this.config.banner_css);
+        }
+        
         // Check if we need to show the banner
         if (!this.hasValidConsent()) {
           await this.showBanner();
